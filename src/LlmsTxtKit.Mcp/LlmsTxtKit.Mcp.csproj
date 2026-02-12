@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target .NET 8 LTS. The MCP server runs as a standalone process. -->
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- NuGet package metadata -->
+    <PackageId>LlmsTxtKit.Mcp</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Ryan</Authors>
+    <Description>
+      An MCP (Model Context Protocol) server that exposes llms.txt capabilities
+      as tools for AI agents. Wraps LlmsTxtKit.Core to provide llmstxt_discover,
+      llmstxt_fetch_section, llmstxt_validate, llmstxt_context, and
+      llmstxt_compare tools via the MCP standard.
+    </Description>
+    <PackageTags>llmstxt;llms.txt;mcp;model-context-protocol;ai;agent;dotnet</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/YOUR_USERNAME/LlmsTxtKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/YOUR_USERNAME/LlmsTxtKit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- LlmsTxtKit.Mcp depends on Core for all llms.txt parsing, fetching,
+         validation, caching, and context generation. The MCP server is a thin
+         protocol wrapper around Core's capabilities. -->
+    <ProjectReference Include="..\LlmsTxtKit.Core\LlmsTxtKit.Core.csproj" />
+  </ItemGroup>
+
+</Project>

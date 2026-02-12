@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Target .NET 8 LTS. See ROADMAP.md § Tech Stack Rationale for why. -->
+    <TargetFramework>net8.0</TargetFramework>
+
+    <!-- Enable nullable reference types project-wide. All public API surface
+         must be explicitly annotated. See CONTRIBUTING.md § Coding Standards. -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Generate XML documentation file for API reference generation.
+         Missing XML docs on public members will produce warnings. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- NuGet package metadata -->
+    <PackageId>LlmsTxtKit.Core</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Ryan</Authors>
+    <Description>
+      A .NET library for parsing, fetching, validating, caching, and generating
+      context from llms.txt files. Implements the llms.txt specification
+      (llmstxt.org) with WAF-aware fetching, spec-compliant validation, and
+      configurable caching.
+    </Description>
+    <PackageTags>llmstxt;llms.txt;ai;mcp;dotnet;parsing;geo</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/YOUR_USERNAME/LlmsTxtKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/YOUR_USERNAME/LlmsTxtKit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+</Project>
