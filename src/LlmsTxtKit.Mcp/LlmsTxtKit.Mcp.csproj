@@ -21,8 +21,8 @@
     </Description>
     <PackageTags>llmstxt;llms.txt;mcp;model-context-protocol;ai;agent;dotnet</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/YOUR_USERNAME/LlmsTxtKit</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/YOUR_USERNAME/LlmsTxtKit</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/southpawriter02/LlmsTxtKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/southpawriter02/LlmsTxtKit</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 

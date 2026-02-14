@@ -7,7 +7,7 @@
 
 > This document will define unit test coverage targets, integration test scenarios, and the test data corpus for LlmsTxtKit. It answers the question: *how do we know it works?*
 >
-> For the testing strategy overview, see the [project proposal](https://github.com/YOUR_USERNAME/llmstxt-research/blob/main/PROPOSAL.md) (Project 2 § Testing Strategy).
+> For the testing strategy overview, see the [project proposal](https://github.com/southpawriter02/llmstxt-research/blob/main/PROPOSAL.md) (Project 2 § Testing Strategy).
 > For testing conventions and tooling, see [CONTRIBUTING.md](../CONTRIBUTING.md) § Testing Conventions.
 
 <!-- TODO: Write test plan content. Sections to include:

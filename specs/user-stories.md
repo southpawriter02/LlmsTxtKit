@@ -7,7 +7,7 @@
 
 > This document will define user stories for both primary user types: .NET developers consuming the library directly, and AI agents consuming the MCP server's tools.
 >
-> For the initial user story framing, see the [project proposal](https://github.com/YOUR_USERNAME/llmstxt-research/blob/main/PROPOSAL.md) (Project 2 § Documentation-First Approach, item 4).
+> For the initial user story framing, see the [project proposal](https://github.com/southpawriter02/llmstxt-research/blob/main/PROPOSAL.md) (Project 2 § Documentation-First Approach, item 4).
 
 <!-- TODO: Write user stories. Categories to include:
 

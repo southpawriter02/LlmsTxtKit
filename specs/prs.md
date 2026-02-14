@@ -68,7 +68,7 @@ LlmsTxtKit v1.0 will be considered successful when it meets the following criter
 - Identifies the `## Optional` section and marks its entries accordingly.
 - Produces meaningful error information for files that don't conform to the spec.
 
-**SC-2: Resilient fetching.** The fetcher reliably retrieves llms.txt files from the open web, correctly distinguishing between at least six outcome categories: Success, NotFound, Blocked (WAF/CDN), RateLimited, DnsFailure, Timeout, and Error. For blocked requests, the `FetchResult` includes diagnostic information (HTTP status code, response headers, block reason where detectable).
+**SC-2: Resilient fetching.** The fetcher reliably retrieves llms.txt files from the open web, correctly distinguishing between seven outcome categories: Success, NotFound, Blocked (WAF/CDN), RateLimited, DnsFailure, Timeout, and Error. For blocked requests, the `FetchResult` includes diagnostic information (HTTP status code, response headers, block reason where detectable).
 
 **SC-3: Spec-aware validation.** The validator checks at least the following rules:
 - Required H1 title is present.
@@ -108,7 +108,7 @@ These items are explicitly **out of scope** for LlmsTxtKit v1.0. Some may become
 
 **NG-2: Hosting a public service.** LlmsTxtKit is a library and a self-hosted MCP server. It is not a SaaS product, a hosted API, or a public web service. Users run it in their own infrastructure.
 
-**NG-3: Supporting .NET versions below 8.0.** The library targets `net8.0` exclusively. .NET 6 is out of Long-Term Support (ended November 2024). .NET 7 was never an LTS release. Older frameworks (.NET Framework 4.x, .NET Standard) are not targeted. See the [Unified Roadmap](https://github.com/YOUR_USERNAME/llmstxt-research/blob/main/ROADMAP.md) § Tech Stack Rationale for the full decision rationale.
+**NG-3: Supporting .NET versions below 8.0.** The library targets `net8.0` exclusively. .NET 6 is out of Long-Term Support (ended November 2024). .NET 7 was never an LTS release. Older frameworks (.NET Framework 4.x, .NET Standard) are not targeted. See the [Unified Roadmap](https://github.com/southpawriter02/llmstxt-research/blob/main/ROADMAP.md) § Tech Stack Rationale for the full decision rationale.
 
 **NG-4: Content Signals, CC Signals, or IETF aipref support.** These are complementary standards that govern permission and usage rights, not content discovery. They are architecturally distinct from llms.txt and would require different parsing, validation, and response models. They may become post-v1.0 extensions if the ecosystem converges.
 
@@ -142,7 +142,7 @@ These items are explicitly **out of scope** for LlmsTxtKit v1.0. Some may become
 
 ## 6. Relationship to Other Projects
 
-LlmsTxtKit is the practical implementation arm of the broader [llms.txt Research & Tooling Initiative](https://github.com/YOUR_USERNAME/llmstxt-research). Specifically:
+LlmsTxtKit is the practical implementation arm of the broader [llms.txt Research & Tooling Initiative](https://github.com/southpawriter02/llmstxt-research). Specifically:
 
 - The analytical paper ("The llms.txt Access Paradox") documents the infrastructure problems that LlmsTxtKit is designed to handle. The paper says "here's why direct fetching fails." LlmsTxtKit's `FetchResult` status codes and WAF-aware retry logic are the engineering response.
 

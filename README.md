@@ -111,7 +111,7 @@ using LlmsTxtKit.Core.Fetching;
 // but allow identified tool-specific ones.
 var fetcher = new LlmsTxtFetcher(new FetcherOptions
 {
-    UserAgent = "LlmsTxtKit/1.0 (https://github.com/YOUR_USERNAME/LlmsTxtKit)",
+    UserAgent = "LlmsTxtKit/1.0 (https://github.com/southpawriter02/LlmsTxtKit)",
     TimeoutSeconds = 15,
     MaxRetries = 2
 });
@@ -327,7 +327,7 @@ This is the "give me everything" tool — it fetches the llms.txt file, expands 
 
 **Purpose:** For a given URL, fetch both the HTML page and the llms.txt-linked Markdown version (if available) and report on the differences.
 
-This tool was specifically designed to support the [Context Collapse Mitigation Benchmark](https://github.com/YOUR_USERNAME/llmstxt-research/tree/main/benchmark), but it's broadly useful for anyone comparing what an AI system would see when reading a page via standard web retrieval versus via llms.txt-curated Markdown. The comparison includes token count differences, content overlap estimation, and freshness deltas.
+This tool was specifically designed to support the [Context Collapse Mitigation Benchmark](https://github.com/southpawriter02/llmstxt-research/tree/main/benchmark), but it's broadly useful for anyone comparing what an AI system would see when reading a page via standard web retrieval versus via llms.txt-curated Markdown. The comparison includes token count differences, content overlap estimation, and freshness deltas.
 
 **Input Parameters:**
 
@@ -439,13 +439,13 @@ LlmsTxtKit/
 
 ## Relationship to the Research Initiative
 
-LlmsTxtKit is the practical implementation arm of a broader research initiative documented in the [llmstxt-research](https://github.com/YOUR_USERNAME/llmstxt-research) repository. That repository contains an analytical paper examining the infrastructure contradictions preventing llms.txt from fulfilling its design intent ("The llms.txt Access Paradox"), an empirical benchmark measuring whether llms.txt-curated content actually improves AI response quality ("Context Collapse Mitigation Benchmark"), and a blog series translating the findings into practitioner guidance.
+LlmsTxtKit is the practical implementation arm of a broader research initiative documented in the [llmstxt-research](https://github.com/southpawriter02/llmstxt-research) repository. That repository contains an analytical paper examining the infrastructure contradictions preventing llms.txt from fulfilling its design intent ("The llms.txt Access Paradox"), an empirical benchmark measuring whether llms.txt-curated content actually improves AI response quality ("Context Collapse Mitigation Benchmark"), and a blog series translating the findings into practitioner guidance.
 
 The connections between the repositories are direct and concrete. The paper documents the Access Paradox — LlmsTxtKit implements workarounds for it (the `FetchResult` status codes, the WAF-aware retry logic, the graceful degradation). The paper identifies the trust gap — LlmsTxtKit's `ValidationReport` is a first step toward addressing it. The benchmark study uses LlmsTxtKit's `llmstxt_compare` tool to generate the paired HTML-vs-Markdown data that forms its experimental input. If you're interested in the *why* behind LlmsTxtKit's design decisions, the research repository has the evidence that motivated them.
 
 That said, LlmsTxtKit is designed to be useful on its own merits, entirely independently of the research. You don't need to read the paper to use the library. It's a practical tool for a practical problem: .NET developers need a way to work with llms.txt files, and this is the package that does it.
 
-For the full cross-project delivery schedule, tech stack rationale, maintenance commitments, and ongoing coordination strategy, see the **[Unified Roadmap](https://github.com/YOUR_USERNAME/llmstxt-research/blob/main/ROADMAP.md)** in the research repository.
+For the full cross-project delivery schedule, tech stack rationale, maintenance commitments, and ongoing coordination strategy, see the **[Unified Roadmap](https://github.com/southpawriter02/llmstxt-research/blob/main/ROADMAP.md)** in the research repository.
 
 ---
 

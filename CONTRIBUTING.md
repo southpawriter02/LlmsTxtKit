@@ -16,7 +16,7 @@ Thank you for your interest in contributing to LlmsTxtKit. This document covers 
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/LlmsTxtKit.git
+git clone https://github.com/southpawriter02/LlmsTxtKit.git
 cd LlmsTxtKit
 
 # Restore dependencies and build
