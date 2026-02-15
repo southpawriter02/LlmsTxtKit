@@ -82,7 +82,9 @@ LlmsDocument
 
 - **Lenient parsing with structured errors.** The parser does not throw on malformed input. Instead, it returns an `LlmsDocument` with whatever it could extract, plus a `ParseDiagnostics` collection that records warnings (non-fatal issues like a missing blockquote) and errors (structural problems like no H1 title). This lets callers decide their own strictness threshold rather than having the parser enforce one.
 
-- **No Markdown library dependency for the happy path.** The llms.txt spec uses a deliberately restricted subset of Markdown (H1, H2, blockquotes, lists with links). The parser handles this subset with targeted string processing rather than pulling in a full Markdown AST library (like Markdig). This keeps the dependency tree minimal. However, Markdig may be used as an *optional* dependency for the context generator (Section 2.5), which needs to process arbitrary Markdown from linked pages.
+- **No Markdown library dependency for the happy path.** The llms.txt spec uses a deliberately restricted subset of Markdown (H1, H2, blockquotes, lists with links). The parser handles this subset with targeted string processing rather than pulling in a full Markdown AST library (like Markdig). This keeps the dependency tree minimal and follows the same approach as the reference implementation (`miniparse.py` is ~20 lines of regex-based parsing). However, Markdig may be used as an *optional* dependency for the context generator (Section 2.5), which needs to process arbitrary Markdown from linked pages.
+
+- **Behavioral alignment with the reference parser.** The reference Python implementation (`AnswerDotAI/llms-txt`, specifically `miniparse.py`) defines the canonical parsing behavior. Key behavioral details derived from the reference code: (1) sections are delimited by `^##\s*` — only H2 headings create new sections; H3+ headings are treated as content within the parent section; (2) the blockquote summary captures a single line only (`^>\s*(?P<summary>.+?$)`); (3) the "Optional" section check is case-sensitive and exact-match (`k != 'Optional'`); (4) the canonical link pattern is `-\s*\[(?P<title>[^\]]+)\]\((?P<url>[^\)]+)\)(?::\s*(?P<desc>.*))?`; (5) the freeform content between the blockquote and first H2 is captured as a single blob (the "info" field). LlmsTxtKit's parser must produce equivalent results for all well-formed inputs, while adding structured diagnostics for malformed inputs (which the reference parser does not handle).
 
 **Public API surface:**
 
@@ -257,7 +259,8 @@ CacheOptions
 ```
 ContextOptions
 ├── MaxTokens: int?                  // Approximate token budget. Null = no limit.
-├── IncludeOptional: bool            // Include ## Optional section content. Default: true.
+├── IncludeOptional: bool            // Include ## Optional section content. Default: false.
+│                                    // (Aligns with reference implementation's create_ctx(optional=False).)
 ├── WrapSectionsInXml: bool          // Wrap sections in <section name="...">. Default: true.
 └── TokenEstimator: Func<string, int>?  // Custom token counting function. Default: word/4 heuristic.
 ```
@@ -268,7 +271,11 @@ ContextOptions
 
 - **Graceful truncation.** When the token budget is exceeded, the generator follows a priority order: first, the Optional section is dropped entirely (this matches the spec's semantics for the Optional section). If still over budget, remaining sections are truncated at sentence boundaries (not mid-word, not mid-sentence). A truncation indicator (`[... content truncated to fit token budget ...]`) is appended so downstream consumers know the context is incomplete.
 
-- **Fetching linked content.** The context generator uses `LlmsTxtFetcher` internally to retrieve the Markdown content of each linked URL. This means the same infrastructure-aware fetching (WAF handling, timeouts, retries) applies to linked content, not just the llms.txt file itself. Links that fail to fetch are included as a placeholder noting the failure, not silently omitted.
+- **Fetching linked content.** The context generator uses `LlmsTxtFetcher` internally to retrieve the Markdown content of each linked URL. This means the same infrastructure-aware fetching (WAF handling, timeouts, retries) applies to linked content, not just the llms.txt file itself. Links that fail to fetch are included as a placeholder noting the failure, not silently omitted. Following the reference implementation's behavior, HTML comments and base64-embedded images are stripped from fetched Markdown content before inclusion.
+
+- **XML format divergence from reference implementation.** The reference Python implementation generates XML using fastcore's FT (FastTags) system with a `<project title="..." summary="...">` root element, semantic section elements named after the H2 heading (e.g., `<docs>`, `<examples>`), and `<doc title="..." url="...">` wrappers for each linked document's content. LlmsTxtKit uses a different approach: generic `<section name="...">` wrappers with string content. This is a deliberate design choice — the generic wrapper approach avoids generating arbitrary XML element names from user content (which could produce invalid XML if section names contain special characters) and provides a more predictable schema for downstream consumers. Both formats convey the same structural information.
+
+- **Parallel fetching consideration.** The reference implementation supports parallel document fetching via a `n_workers` parameter using threadpool-based concurrency. LlmsTxtKit v1.0 fetches linked documents sequentially. Parallel fetching using `Task.WhenAll` with configurable concurrency limits is a candidate for post-v1.0 enhancement.
 
 ---
 
@@ -321,7 +328,7 @@ The MCP server exposes five tools. Each tool delegates to LlmsTxtKit.Core servic
 |---|---|---|---|
 | `domain` | string | Yes | The domain to generate context for. |
 | `max_tokens` | integer | No | Approximate token budget. Null = no limit. |
-| `include_optional` | boolean | No | Whether to include Optional section. Default: true. |
+| `include_optional` | boolean | No | Whether to include Optional section. Default: false (matches reference implementation). |
 
 **Returns:** JSON object containing the generated context string, actual token count (approximate), sections included, and any sections that were truncated or omitted.
 

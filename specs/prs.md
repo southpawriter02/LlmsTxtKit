@@ -60,13 +60,13 @@ LlmsTxtKit v1.0 will be considered successful when it meets the following criter
 
 ### 3.1 Functional Completeness
 
-**SC-1: Spec-compliant parsing.** The parser correctly handles all well-formed llms.txt files that conform to the specification at llmstxt.org. Specifically:
+**SC-1: Spec-compliant parsing.** The parser correctly handles all well-formed llms.txt files that conform to the specification at llmstxt.org. The canonical behavioral reference is the official Python implementation in [`AnswerDotAI/llms-txt`](https://github.com/AnswerDotAI/llms-txt) (`miniparse.py` and `core.py`), which defines the ground-truth parsing behavior that this library must be compatible with. Specifically:
 - Extracts the required H1 title.
-- Extracts the optional blockquote summary.
-- Extracts zero or more freeform Markdown sections (paragraphs, lists, but no headings) between the summary and the first H2.
-- Extracts zero or more H2-delimited sections containing file lists (Markdown links with optional colon-separated descriptions).
-- Identifies the `## Optional` section and marks its entries accordingly.
-- Produces meaningful error information for files that don't conform to the spec.
+- Extracts the optional blockquote summary. (Note: the reference parser captures a single-line blockquote only. LlmsTxtKit should handle multi-line blockquotes gracefully as a superset, but single-line is the baseline expectation.)
+- Extracts zero or more freeform Markdown content (the reference implementation calls this the "info" field) between the summary and the first H2 — paragraphs, lists, inline formatting, but not headings.
+- Extracts zero or more H2-delimited sections containing file lists (Markdown links with optional colon-separated descriptions). H3 and deeper headings are treated as content within the parent H2 section, not as structural delimiters — this matches the reference parser's `^##\s*` split behavior.
+- Identifies the `## Optional` section (case-sensitive, exact match — matching the reference implementation's `k != 'Optional'` check) and marks its entries accordingly.
+- Produces meaningful error information for files that don't conform to the spec. (The reference implementation does not validate or produce diagnostics — structured error reporting is LlmsTxtKit's value-add beyond the reference.)
 
 **SC-2: Resilient fetching.** The fetcher reliably retrieves llms.txt files from the open web, correctly distinguishing between seven outcome categories: Success, NotFound, Blocked (WAF/CDN), RateLimited, DnsFailure, Timeout, and Error. For blocked requests, the `FetchResult` includes diagnostic information (HTTP status code, response headers, block reason where detectable).
 
@@ -80,7 +80,7 @@ LlmsTxtKit v1.0 will be considered successful when it meets the following criter
 
 **SC-4: Configurable caching.** The cache stores parsed documents with configurable TTL, supports in-memory storage (default) and optionally file-backed storage, and correctly evicts stale entries. Cache entries include the parsed document, validation report, fetch timestamp, and relevant HTTP headers.
 
-**SC-5: Context generation with token budgeting.** The context generator fetches linked Markdown files, wraps them in XML-style section markers, respects the Optional section's skip-when-short semantics, and truncates gracefully when a token budget is specified.
+**SC-5: Context generation with token budgeting.** The context generator fetches linked Markdown files, wraps them in XML-style section markers, respects the Optional section's semantics, and truncates gracefully when a token budget is specified. The reference implementation's `create_ctx()` function defaults to `optional=False` (Optional sections excluded by default), and LlmsTxtKit follows this convention — `IncludeOptional` defaults to `false`. The reference implementation also outputs XML using a `<project>/<section>/<doc>` element hierarchy (via fastcore's FT system); LlmsTxtKit uses a `<section name="...">` generic wrapper approach instead, which is a deliberate design divergence documented in the Design Spec §2.5.
 
 **SC-6: Five MCP tools operational.** The MCP server exposes all five documented tools (`llmstxt_discover`, `llmstxt_fetch_section`, `llmstxt_validate`, `llmstxt_context`, `llmstxt_compare`) with correctly structured MCP tool definitions, parameter schemas, and response formats.
 
@@ -124,7 +124,7 @@ These items are explicitly **out of scope** for LlmsTxtKit v1.0. Some may become
 
 ### 5.1 Assumptions
 
-**A-1: The llms.txt spec remains stable.** The specification at llmstxt.org has been stable since its September 2024 publication. The parser is designed against this spec. If the spec changes substantially, the parser will need updating. Minor clarifications (resolving ambiguities in link format, Optional section behavior, etc.) are expected and the parser should handle them gracefully.
+**A-1: The llms.txt spec remains stable.** The specification at llmstxt.org has been stable since its September 2024 publication, and the reference Python implementation at `AnswerDotAI/llms-txt` serves as the canonical behavioral baseline. The parser is designed against both the spec text and the reference implementation's behavior. If the spec or reference implementation changes substantially, the parser will need updating. Minor clarifications (resolving ambiguities in link format, Optional section behavior, etc.) are expected and the parser should handle them gracefully.
 
 **A-2: MCP protocol stability.** The Model Context Protocol specification is maintained by Anthropic and is under active development. LlmsTxtKit.Mcp targets the current stable MCP protocol version. If the protocol changes, the MCP server may need updating, but LlmsTxtKit.Core (the library) is entirely protocol-agnostic and unaffected.
 
