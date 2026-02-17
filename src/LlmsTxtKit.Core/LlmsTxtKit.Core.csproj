@@ -15,7 +15,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>LlmsTxtKit.Core</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Ryan</Authors>
     <Description>
       A .NET library for parsing, fetching, validating, caching, and generating
