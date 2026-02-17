@@ -15,7 +15,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>LlmsTxtKit.Core</PackageId>
-    <Version>0.2.0</Version>
+    <Version>0.5.0</Version>
     <Authors>Ryan</Authors>
     <Description>
       A .NET library for parsing, fetching, validating, caching, and generating
@@ -29,5 +29,12 @@
     <RepositoryUrl>https://github.com/southpawriter02/LlmsTxtKit</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+
+  <!-- Allow the test project to access internal members for thorough unit testing.
+       This is standard practice in .NET — tests should be able to verify internal
+       behavior (like LRU timestamps) without making those details public API. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="LlmsTxtKit.Core.Tests" />
+  </ItemGroup>
 
 </Project>
