@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-02-17
+
+### Added
+
+- **`llmstxt_compare` MCP tool** (`Tools/CompareTool.cs`) for HTML vs. Markdown content comparison. Accepts a `url` parameter (specific page URL), fetches both the HTML page at that URL and the Markdown version at `{url}.md` (following the llms.txt convention), and returns comparative metrics. Response includes: `success`, `url`, `markdownUrl`, `markdownAvailable` (boolean), `htmlSize` (bytes), `markdownSize` (bytes, null if unavailable), `sizeRatio` (Markdown/HTML, < 1.0 means Markdown is smaller), `htmlTokenEstimate`, `markdownTokenEstimate`, `tokenRatio` (Markdown/HTML tokens, < 1.0 means fewer tokens), and `freshnessDelta` (Last-Modified difference in seconds; positive = Markdown newer). When no Markdown version exists, returns HTML-only metrics with `markdownAvailable: false`. Designed to support the Context Collapse Mitigation Benchmark study (PRS § 6, Design Spec § 3.5).
+- **HTML-to-text stripping utility** (`CompareTool.StripHtmlTags`) that simulates retrieval pipeline HTML processing: removes `<script>` and `<style>` blocks (including content), strips HTML comments, removes all remaining HTML tags, decodes HTML entities (via `WebUtility.HtmlDecode`), and normalizes whitespace. Intentionally simple (regex-based, not a full HTML parser) to match real-world retrieval pipeline behavior.
+- **Token estimation utility** (`CompareTool.EstimateTokenCount`) using the same words÷4 ceiling heuristic as `ContextGenerator` for consistency across the toolkit.
+- **`CompareTestHandler`** mock HTTP handler for comparison tests — returns different responses for HTML vs. Markdown URLs (based on `.md` suffix), with configurable status codes, content, and Last-Modified headers.
+- **18 `CompareTool` unit tests** in `CompareToolTests.cs` covering: both versions available with full metrics, no Markdown version with `markdownAvailable: false`, size and token ratio calculation correctness, freshness delta when Last-Modified headers present, freshness delta null when headers absent, HTML fetch failure error propagation, empty URL validation, invalid URL (non-HTTP scheme) validation, relative URL validation, success response required fields, error response required fields, HTML tag stripping (basic, script/style removal, entity decoding, empty input), token estimation (known input, empty input), and trailing slash URL handling.
+
+### Changed
+
+- **All five MCP tools are now operational** — the full tool suite defined in Design Spec § 3 is complete: `llmstxt_discover`, `llmstxt_fetch_section`, `llmstxt_validate`, `llmstxt_context`, and `llmstxt_compare`. This represents feature completeness for the v1.0 scope's MCP tool layer.
+
 ## [0.7.0] - 2026-02-17
 
 ### Added
