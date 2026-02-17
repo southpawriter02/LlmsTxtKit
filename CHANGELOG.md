@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-02-17
+
+### Added
+
+- **MCP server infrastructure** in `LlmsTxtKit.Mcp`:
+  - `Program.cs` — Complete MCP server entry point using the official C# MCP SDK (`ModelContextProtocol` 0.8.0-preview.1) with `Microsoft.Extensions.Hosting` for DI and lifecycle management. Configures stdio transport (JSON-RPC over stdin/stdout per MCP convention), routes logging to stderr, registers all Core services via DI, and discovers tools by scanning the assembly for `[McpServerToolType]` classes.
+  - `Server/ServerConfiguration.cs` — DI service registration extension method (`AddLlmsTxtKitServices`) that wires up all five Core services as singletons: `LlmsTxtFetcher`, `LlmsTxtCache`, `LlmsDocumentValidator`, `ContextGenerator`, and `HttpContentFetcher`. Configuration is read from environment variables (`LLMSTXTKIT_USER_AGENT`, `LLMSTXTKIT_TIMEOUT_SECONDS`, `LLMSTXTKIT_MAX_RETRIES`, `LLMSTXTKIT_CACHE_TTL_MINUTES`, `LLMSTXTKIT_CACHE_MAX_ENTRIES`, `LLMSTXTKIT_CACHE_DIR`) with sensible defaults.
+  - `Tools/DiscoverTool.cs` — First MCP tool: `llmstxt_discover`. Accepts a `domain` parameter, checks for `/llms.txt` via `LlmsTxtFetcher`, caches successful results in `LlmsTxtCache`, and returns a JSON response containing: `found` (boolean), `status` (success/notFound/blocked/rateLimited/dnsFailure/timeout/error), and on success: `title`, `summary`, `sections` (array of `{ name, entryCount, isOptional }`), `diagnostics` (parse warnings/errors), and `fromCache` flag. Handles all seven `FetchStatus` outcomes with human-readable error messages. Includes comprehensive debug logging at every decision point.
+- **NuGet package dependencies** for `LlmsTxtKit.Mcp`:
+  - `ModelContextProtocol` 0.8.0-preview.1 (official C# MCP SDK, maintained in collaboration between Anthropic and Microsoft)
+  - `Microsoft.Extensions.Hosting` 10.0.3 (DI container, configuration, and host lifecycle)
+  - `Microsoft.Extensions.Logging.Console` 10.0.3 (console logging provider for stderr output)
+- **`InternalsVisibleTo`** attribute in `LlmsTxtKit.Mcp.csproj` exposing internal response DTOs to the test project for JSON structure assertions.
+- **14 MCP tool unit tests** in `DiscoverToolTests.cs` covering: successful discovery with full response structure validation, cache population on first fetch, cache hit returning `fromCache: true`, HTTP 404 not-found response, Cloudflare WAF block with `blockReason`, AWS CloudFront WAF block, 429 rate limiting, DNS failure, 500 server error, empty domain parameter validation, whitespace domain parameter validation, success response required fields check, error response required fields check, and parse diagnostics inclusion.
+- **`MockHttpHandler`** test infrastructure in `LlmsTxtKit.Mcp.Tests` for simulating HTTP responses in MCP tool tests without network access.
+
 ## [0.5.0] - 2026-02-17
 
 ### Added

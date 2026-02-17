@@ -11,7 +11,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>LlmsTxtKit.Mcp</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.6.0</Version>
     <Authors>Ryan</Authors>
     <Description>
       An MCP (Model Context Protocol) server that exposes llms.txt capabilities
@@ -26,11 +26,22 @@
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
+  <!-- Allow the test project to access internal response DTOs for assertion.  -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="LlmsTxtKit.Mcp.Tests" />
+  </ItemGroup>
+
   <ItemGroup>
     <!-- LlmsTxtKit.Mcp depends on Core for all llms.txt parsing, fetching,
          validation, caching, and context generation. The MCP server is a thin
          protocol wrapper around Core's capabilities. -->
     <ProjectReference Include="..\LlmsTxtKit.Core\LlmsTxtKit.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.3" />
+    <PackageReference Include="ModelContextProtocol" Version="0.8.0-preview.1" />
   </ItemGroup>
 
 </Project>

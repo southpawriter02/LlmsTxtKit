@@ -2,39 +2,82 @@
 //
 // This is the main entry point for the LlmsTxtKit MCP server process.
 // It configures dependency injection, registers MCP tools, sets up the
-// transport layer, and starts listening for tool invocations from AI agents.
+// stdio transport layer, and starts listening for tool invocations from
+// AI agents (Claude Desktop, GitHub Copilot, etc.).
 //
 // Architecture overview:
-//   - The server exposes five MCP tools: llmstxt_discover, llmstxt_fetch_section,
-//     llmstxt_validate, llmstxt_context, and llmstxt_compare.
-//   - Each tool delegates to LlmsTxtKit.Core services (parser, fetcher,
-//     validator, cache, context generator).
-//   - Configuration (timeouts, cache TTL, user-agent string) is read from
-//     environment variables and/or a config file.
+//   - The server uses the official C# MCP SDK (ModelContextProtocol NuGet package)
+//     with Microsoft.Extensions.Hosting for DI and lifecycle management.
+//   - Transport: stdio (standard input/output) — the most common transport for
+//     local MCP servers. JSON-RPC messages are read from stdin and written to stdout.
+//   - Logging goes to stderr so it doesn't interfere with the JSON-RPC protocol.
+//   - Core services (LlmsTxtFetcher, LlmsTxtCache, LlmsDocumentValidator,
+//     ContextGenerator) are registered as singletons and injected into tool methods.
+//   - Tools are discovered by scanning the assembly for [McpServerToolType] classes.
+//
+// Configuration:
+//   Environment variables (all optional, sensible defaults provided):
+//     LLMSTXTKIT_USER_AGENT        — Custom User-Agent string
+//     LLMSTXTKIT_TIMEOUT_SECONDS   — HTTP fetch timeout (default: 15)
+//     LLMSTXTKIT_MAX_RETRIES       — Fetch retry count (default: 2)
+//     LLMSTXTKIT_CACHE_TTL_MINUTES — Cache TTL in minutes (default: 60)
+//     LLMSTXTKIT_CACHE_MAX_ENTRIES — Maximum cached domains (default: 1000)
+//     LLMSTXTKIT_CACHE_DIR         — File-backed cache directory (optional)
 //
 // For the full design rationale, see specs/design-spec.md.
 // For the MCP tool definitions, see the Tools/ directory.
 
+using LlmsTxtKit.Mcp.Server;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Server;
+
 namespace LlmsTxtKit.Mcp;
 
 /// <summary>
-/// Entry point for the LlmsTxtKit MCP server.
+/// Entry point for the LlmsTxtKit MCP server. Configures the host builder
+/// with DI services, MCP server infrastructure, and stdio transport.
 /// </summary>
 public class Program
 {
     /// <summary>
     /// Starts the MCP server with configured tools and transport.
     /// </summary>
-    /// <param name="args">Command-line arguments for configuration overrides.</param>
+    /// <param name="args">Command-line arguments (currently unused, reserved for future config overrides).</param>
     public static async Task Main(string[] args)
     {
-        // TODO: Configure DI container with Core services
-        // TODO: Register MCP tools (discover, fetch_section, validate, context, compare)
-        // TODO: Set up MCP transport (stdio or HTTP, configurable)
-        // TODO: Start server and await shutdown signal
+        // ---------------------------------------------------------------
+        // Build the application host
+        // ---------------------------------------------------------------
+        var builder = Host.CreateApplicationBuilder(args);
 
-        Console.WriteLine("LlmsTxtKit MCP Server — not yet implemented.");
-        Console.WriteLine("See specs/design-spec.md for the planned architecture.");
-        await Task.CompletedTask;
+        // Configure logging to stderr (MCP convention: stdout is for JSON-RPC,
+        // stderr is for diagnostic output). Set minimum level to Debug for
+        // comprehensive diagnostic output during development.
+        builder.Logging.AddConsole(consoleLogOptions =>
+        {
+            // Route ALL log output to stderr so it doesn't corrupt the
+            // JSON-RPC transport on stdout. This is critical for MCP servers.
+            consoleLogOptions.LogToStandardErrorThreshold = LogLevel.Trace;
+        });
+
+        // ---------------------------------------------------------------
+        // Register LlmsTxtKit Core services (fetcher, cache, validator, etc.)
+        // ---------------------------------------------------------------
+        builder.Services.AddLlmsTxtKitServices();
+
+        // ---------------------------------------------------------------
+        // Configure MCP server with stdio transport and auto-discovered tools
+        // ---------------------------------------------------------------
+        builder.Services
+            .AddMcpServer()
+            .WithStdioServerTransport()
+            .WithToolsFromAssembly();  // Scans for [McpServerToolType] classes
+
+        // ---------------------------------------------------------------
+        // Start the server
+        // ---------------------------------------------------------------
+        await builder.Build().RunAsync();
     }
 }
