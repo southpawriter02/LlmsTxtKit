@@ -24,7 +24,7 @@ namespace LlmsTxtKit.Mcp.Server;
 /// Configuration is read from environment variables with sensible defaults:
 /// </para>
 /// <list type="bullet">
-/// <item><c>LLMSTXTKIT_USER_AGENT</c> — Custom User-Agent string (default: "LlmsTxtKit/0.6.0")</item>
+/// <item><c>LLMSTXTKIT_USER_AGENT</c> — Custom User-Agent string (default: "LlmsTxtKit/0.7.0")</item>
 /// <item><c>LLMSTXTKIT_TIMEOUT_SECONDS</c> — HTTP fetch timeout (default: 15)</item>
 /// <item><c>LLMSTXTKIT_MAX_RETRIES</c> — Fetch retry count (default: 2)</item>
 /// <item><c>LLMSTXTKIT_CACHE_TTL_MINUTES</c> — Cache TTL in minutes (default: 60)</item>
@@ -118,7 +118,7 @@ public static class ServerConfiguration
     {
         // FetcherOptions uses init-only properties, so all config must be
         // set in the object initializer. Read env vars first, then build.
-        var userAgent = GetEnvString("LLMSTXTKIT_USER_AGENT", "LlmsTxtKit/0.6.0");
+        var userAgent = GetEnvString("LLMSTXTKIT_USER_AGENT", "LlmsTxtKit/0.7.0");
         var timeoutStr = Environment.GetEnvironmentVariable("LLMSTXTKIT_TIMEOUT_SECONDS");
         var retriesStr = Environment.GetEnvironmentVariable("LLMSTXTKIT_MAX_RETRIES");
 

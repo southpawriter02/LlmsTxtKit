@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-02-17
+
+### Added
+
+- **`llmstxt_fetch_section` MCP tool** (`Tools/FetchSectionTool.cs`) for retrieving the linked Markdown content of a specific section. Accepts `domain` and `section` parameters (section name is case-insensitive). Fetches each entry's linked URL via the injected `IContentFetcher`, cleans content (strips HTML comments and base64 images via `ContextGenerator.CleanContent`), and returns a JSON response with: `success`, `domain`, `section`, `entryCount`, `entries` array (each with `title`, `url`, `description`, `content` or `error`), `fetchErrors` count, and `fromCache` flag. When the requested section doesn't exist, returns an error with the list of `availableSections` so the agent can self-correct without re-calling `llmstxt_discover`.
+- **`llmstxt_validate` MCP tool** (`Tools/ValidateTool.cs`) for running spec-compliance and health checks. Accepts `domain`, optional `check_urls` (boolean, default false), and optional `check_freshness` (boolean, default false). Delegates to `LlmsDocumentValidator` with the appropriate `ValidationOptions`. Returns a JSON response with: `isValid`, `errorCount`, `warningCount`, `issues` array (each with `severity`, `rule`, `message`, `location`), `domain`, `title`, and `fromCache` flag. When the domain's llms.txt cannot be fetched, returns a fetch-level error with `success: false`.
+- **`llmstxt_context` MCP tool** (`Tools/ContextTool.cs`) for generating full LLM-ready context strings. Accepts `domain`, optional `max_tokens` (integer, 0 or null = no limit), and optional `include_optional` (boolean, default false). Delegates to `ContextGenerator.GenerateAsync` with `WrapSectionsInXml = true`. Returns a JSON response with: `success`, `domain`, `content` (the generated context string), `approximateTokenCount`, `sectionsIncluded`, `sectionsOmitted` (when budget drops sections), `sectionsTruncated` (when budget truncates), `fetchErrors` (URLs that failed), and `fromCache` flag.
+- **`MockContentFetcher`** test infrastructure (`IContentFetcher` mock) supporting both pre-configured successes and explicit failure responses for unit testing tools that fetch linked content.
+- **15 `FetchSectionTool` unit tests** in `FetchSectionToolTests.cs` covering: valid section content retrieval, case-insensitive section matching, origin fetch (no cache), cache hit with `fromCache: true`, nonexistent section with `availableSections` hint, partial entry fetch failure with error-per-entry, all-entries-fail scenario, HTML comment stripping in fetched content, domain 404 error propagation, empty domain validation, empty section validation, success response required fields, entry description inclusion, and entry structure verification.
+- **15 `ValidateTool` unit tests** in `ValidateToolTests.cs` covering: valid document with `isValid: true` and zero issues, empty issues array on valid doc, no-H1 document with `isValid: false`, empty section warning (document still valid), multiple issues all returned, issue field structure (severity/rule/message), machine-readable rule IDs, origin fetch (no cache), domain 404 error, empty domain validation, whitespace domain validation, success response required fields, error response required fields, and cache hit `fromCache: true`.
+- **17 `ContextTool` unit tests** in `ContextToolTests.cs` covering: valid domain context generation with content/tokenCount/sectionsIncluded, Optional section excluded by default, Optional section included when `includeOptional: true`, token budget enforcement (`approximateTokenCount <= maxTokens`), Optional dropped first under budget pressure, `maxTokens=0` treated as unlimited, fetch errors included in response, XML-wrapped content structure, domain 404 error, empty domain validation, whitespace domain validation, success response required fields, error response required fields, and cache hit `fromCache: true`.
+
+### Changed
+
+- **`ContextGenerator.CleanContent`** method visibility changed from `internal` to `public` to allow the MCP tool layer to clean fetched content without duplicating the logic. This is a non-breaking change — the method was already `static` and pure.
+
 ## [0.6.0] - 2026-02-17
 
 ### Added
