@@ -1,0 +1,18 @@
+# Empty Sections Project
+
+> A project where some sections have entries and some don't.
+
+## Getting Started
+
+- [Quick start](https://example.com/docs/quickstart.md): Get up and running
+
+## Roadmap
+
+## API Reference
+
+- [REST API](https://example.com/docs/api.md): API documentation
+
+## Future Plans
+
+## Optional
+

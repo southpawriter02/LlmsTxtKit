@@ -1,0 +1,14 @@
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/bin/Debug/net8.0/LlmsTxtKit.Core.deps.json
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/bin/Debug/net8.0/LlmsTxtKit.Core.dll
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/bin/Debug/net8.0/LlmsTxtKit.Core.pdb
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/bin/Debug/net8.0/LlmsTxtKit.Core.xml
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/Debug/net8.0/LlmsTxtKit.Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/Debug/net8.0/LlmsTxtKit.Core.AssemblyInfoInputs.cache
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/Debug/net8.0/LlmsTxtKit.Core.AssemblyInfo.cs
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/Debug/net8.0/LlmsTxtKit.Core.csproj.CoreCompileInputs.cache
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/Debug/net8.0/LlmsTxtKit.Core.sourcelink.json
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/Debug/net8.0/LlmsTxtKit.Core.dll
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/Debug/net8.0/refint/LlmsTxtKit.Core.dll
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/Debug/net8.0/LlmsTxtKit.Core.xml
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/Debug/net8.0/LlmsTxtKit.Core.pdb
+/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/Debug/net8.0/ref/LlmsTxtKit.Core.dll

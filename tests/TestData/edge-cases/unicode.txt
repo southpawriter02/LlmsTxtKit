@@ -1,0 +1,12 @@
+# Ünïcödé Prøjèct 日本語
+
+> Diëse Bibliothek unterstützt Unicode-Zeichen in allen Feldern — タイトル、セクション、説明。
+
+## Dökümëntâtïon
+
+- [Ëinstieg 入門](https://example.com/docs/einführung.md): Schnëllstart-Anleitung für Ünïcödé-Projekte — クイックスタート
+- [API Référence — リファレンス](https://example.com/docs/api-référence.md): Complète API Dökümëntâtïon
+
+## Optional
+
+- [Changelog — 変更履歴](https://example.com/docs/changelog.md): Ändërungsprotokoll mit Ünïcödé

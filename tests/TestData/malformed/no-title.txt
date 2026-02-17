@@ -1,0 +1,5 @@
+> This file has a summary but no H1 title.
+
+## Docs
+
+- [Some doc](https://example.com/doc.md): A document

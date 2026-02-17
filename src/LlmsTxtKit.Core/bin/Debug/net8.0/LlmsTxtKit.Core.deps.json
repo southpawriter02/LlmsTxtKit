@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "LlmsTxtKit.Core/0.1.0": {
+        "runtime": {
+          "LlmsTxtKit.Core.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "LlmsTxtKit.Core/0.1.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

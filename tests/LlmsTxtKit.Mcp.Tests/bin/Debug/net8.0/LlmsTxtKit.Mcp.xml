@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>LlmsTxtKit.Mcp</name>
+    </assembly>
+    <members>
+        <member name="T:LlmsTxtKit.Mcp.Program">
+            <summary>
+            Entry point for the LlmsTxtKit MCP server.
+            </summary>
+        </member>
+        <member name="M:LlmsTxtKit.Mcp.Program.Main(System.String[])">
+            <summary>
+            Starts the MCP server with configured tools and transport.
+            </summary>
+            <param name="args">Command-line arguments for configuration overrides.</param>
+        </member>
+    </members>
+</doc>

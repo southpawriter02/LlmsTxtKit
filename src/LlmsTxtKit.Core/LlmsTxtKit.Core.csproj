@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- Target .NET 8 LTS. See ROADMAP.md § Tech Stack Rationale for why. -->
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
 
     <!-- Enable nullable reference types project-wide. All public API surface
          must be explicitly annotated. See CONTRIBUTING.md § Coding Standards. -->

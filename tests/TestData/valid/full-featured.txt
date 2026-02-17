@@ -1,0 +1,30 @@
+# Full-Featured Project
+
+> A comprehensive project demonstrating all structural elements of the llms.txt specification.
+
+This project uses a modular architecture with clear separation of concerns.
+Each module is independently testable and deployable.
+
+- The core library handles data processing.
+- The CLI provides command-line access to all features.
+
+## Getting Started
+
+- [Quick start guide](https://example.com/docs/quickstart.md): Step-by-step setup instructions
+- [Installation](https://example.com/docs/install.md): Platform-specific installation notes
+
+## API Reference
+
+- [REST API](https://example.com/docs/api/rest.md): Complete REST endpoint documentation
+- [GraphQL API](https://example.com/docs/api/graphql.md): GraphQL schema and query examples
+- [Authentication](https://example.com/docs/api/auth.md): OAuth2 and API key authentication
+
+## Examples
+
+- [Basic usage](https://example.com/examples/basic.md): Minimal working example
+- [Advanced patterns](https://example.com/examples/advanced.md): Production-ready patterns and best practices
+
+## Optional
+
+- [Contributing guide](https://example.com/docs/contributing.md): How to contribute to the project
+- [Architecture decision records](https://example.com/docs/adr/index.md): Historical design decisions

@@ -1,0 +1,10 @@
+# Broken Links Project
+
+> A project with various malformed entries.
+
+## Docs
+
+- Just some plain text without a link
+- [Missing URL](): Empty URL in link
+- [Relative link](docs/guide.md): Uses a relative URL instead of absolute
+- [Valid entry](https://example.com/valid.md): This one is fine

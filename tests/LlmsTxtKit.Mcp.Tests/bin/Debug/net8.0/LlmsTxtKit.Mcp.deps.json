@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "LlmsTxtKit.Mcp/0.1.0": {
+        "dependencies": {
+          "LlmsTxtKit.Core": "0.1.0"
+        },
+        "runtime": {
+          "LlmsTxtKit.Mcp.dll": {}
+        }
+      },
+      "LlmsTxtKit.Core/0.1.0": {
+        "runtime": {
+          "LlmsTxtKit.Core.dll": {
+            "assemblyVersion": "0.1.0",
+            "fileVersion": "0.1.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "LlmsTxtKit.Mcp/0.1.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "LlmsTxtKit.Core/0.1.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/tests/LlmsTxtKit.Mcp.Tests/LlmsTxtKit.Mcp.Tests.csproj": {}
+  },
+  "projects": {
+    "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/LlmsTxtKit.Core.csproj": {
+      "version": "0.1.0",
+      "restore": {
+        "projectUniqueName": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/LlmsTxtKit.Core.csproj",
+        "projectName": "LlmsTxtKit.Core",
+        "projectPath": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/LlmsTxtKit.Core.csproj",
+        "packagesPath": "/Users/ryan/.nuget/packages/",
+        "outputPath": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/ryan/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "/opt/homebrew/Cellar/dotnet/9.0.112/libexec/library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.22, 8.0.22]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.22, 8.0.22]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/opt/homebrew/Cellar/dotnet/9.0.112/libexec/sdk/9.0.112/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Mcp/LlmsTxtKit.Mcp.csproj": {
+      "version": "0.1.0",
+      "restore": {
+        "projectUniqueName": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Mcp/LlmsTxtKit.Mcp.csproj",
+        "projectName": "LlmsTxtKit.Mcp",
+        "projectPath": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Mcp/LlmsTxtKit.Mcp.csproj",
+        "packagesPath": "/Users/ryan/.nuget/packages/",
+        "outputPath": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Mcp/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/ryan/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "/opt/homebrew/Cellar/dotnet/9.0.112/libexec/library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/LlmsTxtKit.Core.csproj": {
+                "projectPath": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Core/LlmsTxtKit.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.22, 8.0.22]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.osx-arm64",
+              "version": "[8.0.22, 8.0.22]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.22, 8.0.22]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/opt/homebrew/Cellar/dotnet/9.0.112/libexec/sdk/9.0.112/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/tests/LlmsTxtKit.Mcp.Tests/LlmsTxtKit.Mcp.Tests.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/tests/LlmsTxtKit.Mcp.Tests/LlmsTxtKit.Mcp.Tests.csproj",
+        "projectName": "LlmsTxtKit.Mcp.Tests",
+        "projectPath": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/tests/LlmsTxtKit.Mcp.Tests/LlmsTxtKit.Mcp.Tests.csproj",
+        "packagesPath": "/Users/ryan/.nuget/packages/",
+        "outputPath": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/tests/LlmsTxtKit.Mcp.Tests/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/ryan/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "/opt/homebrew/Cellar/dotnet/9.0.112/libexec/library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Mcp/LlmsTxtKit.Mcp.csproj": {
+                "projectPath": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Mcp/LlmsTxtKit.Mcp.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.NET.Test.Sdk": {
+              "target": "Package",
+              "version": "[17.8.0, )"
+            },
+            "coverlet.collector": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[6.0.0, )"
+            },
+            "xunit": {
+              "target": "Package",
+              "version": "[2.7.0, )"
+            },
+            "xunit.runner.visualstudio": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.5.6, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.22, 8.0.22]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.22, 8.0.22]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/opt/homebrew/Cellar/dotnet/9.0.112/libexec/sdk/9.0.112/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

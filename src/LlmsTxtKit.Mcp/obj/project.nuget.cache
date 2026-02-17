@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "sKq+okNTSCE=",
+  "success": true,
+  "projectFilePath": "/Users/ryan/Documents/GitHub/southpawriter02/research/ai-llmstxt/LlmsTxtKit/src/LlmsTxtKit.Mcp/LlmsTxtKit.Mcp.csproj",
+  "expectedPackageFiles": [
+    "/Users/ryan/.nuget/packages/microsoft.netcore.app.ref/8.0.22/microsoft.netcore.app.ref.8.0.22.nupkg.sha512",
+    "/Users/ryan/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.22/microsoft.aspnetcore.app.ref.8.0.22.nupkg.sha512",
+    "/Users/ryan/.nuget/packages/microsoft.netcore.app.host.osx-arm64/8.0.22/microsoft.netcore.app.host.osx-arm64.8.0.22.nupkg.sha512"
+  ],
+  "logs": []
+}

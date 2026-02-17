@@ -1,0 +1,314 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>LlmsTxtKit.Core</name>
+    </assembly>
+    <members>
+        <member name="T:LlmsTxtKit.Core.Parsing.LlmsDocument">
+            <summary>
+            Represents a fully parsed llms.txt document. This is the primary output
+            of <see cref="M:LlmsTxtKit.Core.Parsing.LlmsDocumentParser.Parse(System.String)"/>.
+            </summary>
+            <remarks>
+            <para>
+            The document model is immutable once constructed. The parser produces it;
+            consumers read it. This makes instances safe for caching and concurrent access.
+            </para>
+            <para>
+            The parser uses lenient parsing: it extracts whatever structure it can from
+            the input and records any issues as <see cref="T:LlmsTxtKit.Core.Parsing.ParseDiagnostic"/> entries
+            in the <see cref="P:LlmsTxtKit.Core.Parsing.LlmsDocument.Diagnostics"/> collection. A document with diagnostics
+            is still usable — callers decide their own strictness threshold.
+            </para>
+            </remarks>
+            <param name="Title">
+            The H1 heading content. Empty string if no H1 was found (an error diagnostic
+            will be present in <see cref="P:LlmsTxtKit.Core.Parsing.LlmsDocument.Diagnostics"/>).
+            </param>
+            <param name="Summary">
+            The blockquote content immediately following the H1, or <c>null</c> if
+            no blockquote was present.
+            </param>
+            <param name="FreeformContent">
+            Markdown content between the summary (or title, if no summary) and the
+            first H2 section, or <c>null</c> if no such content exists. This corresponds
+            to the "info" field in the reference Python implementation.
+            </param>
+            <param name="Sections">The ordered list of H2-delimited sections.</param>
+            <param name="Diagnostics">
+            Parse diagnostics (warnings and errors) collected during parsing.
+            An empty list indicates a clean parse with no issues detected.
+            </param>
+            <param name="RawContent">
+            The original, unparsed input string. Preserved for debugging and
+            round-trip verification.
+            </param>
+        </member>
+        <member name="M:LlmsTxtKit.Core.Parsing.LlmsDocument.#ctor(System.String,System.String,System.String,System.Collections.Generic.IReadOnlyList{LlmsTxtKit.Core.Parsing.LlmsSection},System.Collections.Generic.IReadOnlyList{LlmsTxtKit.Core.Parsing.ParseDiagnostic},System.String)">
+            <summary>
+            Represents a fully parsed llms.txt document. This is the primary output
+            of <see cref="M:LlmsTxtKit.Core.Parsing.LlmsDocumentParser.Parse(System.String)"/>.
+            </summary>
+            <remarks>
+            <para>
+            The document model is immutable once constructed. The parser produces it;
+            consumers read it. This makes instances safe for caching and concurrent access.
+            </para>
+            <para>
+            The parser uses lenient parsing: it extracts whatever structure it can from
+            the input and records any issues as <see cref="T:LlmsTxtKit.Core.Parsing.ParseDiagnostic"/> entries
+            in the <see cref="P:LlmsTxtKit.Core.Parsing.LlmsDocument.Diagnostics"/> collection. A document with diagnostics
+            is still usable — callers decide their own strictness threshold.
+            </para>
+            </remarks>
+            <param name="Title">
+            The H1 heading content. Empty string if no H1 was found (an error diagnostic
+            will be present in <see cref="P:LlmsTxtKit.Core.Parsing.LlmsDocument.Diagnostics"/>).
+            </param>
+            <param name="Summary">
+            The blockquote content immediately following the H1, or <c>null</c> if
+            no blockquote was present.
+            </param>
+            <param name="FreeformContent">
+            Markdown content between the summary (or title, if no summary) and the
+            first H2 section, or <c>null</c> if no such content exists. This corresponds
+            to the "info" field in the reference Python implementation.
+            </param>
+            <param name="Sections">The ordered list of H2-delimited sections.</param>
+            <param name="Diagnostics">
+            Parse diagnostics (warnings and errors) collected during parsing.
+            An empty list indicates a clean parse with no issues detected.
+            </param>
+            <param name="RawContent">
+            The original, unparsed input string. Preserved for debugging and
+            round-trip verification.
+            </param>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsDocument.Title">
+            <summary>
+            The H1 heading content. Empty string if no H1 was found (an error diagnostic
+            will be present in <see cref="P:LlmsTxtKit.Core.Parsing.LlmsDocument.Diagnostics"/>).
+            </summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsDocument.Summary">
+            <summary>
+            The blockquote content immediately following the H1, or <c>null</c> if
+            no blockquote was present.
+            </summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsDocument.FreeformContent">
+            <summary>
+            Markdown content between the summary (or title, if no summary) and the
+            first H2 section, or <c>null</c> if no such content exists. This corresponds
+            to the "info" field in the reference Python implementation.
+            </summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsDocument.Sections">
+            <summary>The ordered list of H2-delimited sections.</summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsDocument.Diagnostics">
+            <summary>
+            Parse diagnostics (warnings and errors) collected during parsing.
+            An empty list indicates a clean parse with no issues detected.
+            </summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsDocument.RawContent">
+            <summary>
+            The original, unparsed input string. Preserved for debugging and
+            round-trip verification.
+            </summary>
+        </member>
+        <member name="T:LlmsTxtKit.Core.Parsing.LlmsDocumentParser">
+            <summary>
+            Parses raw llms.txt content into a strongly-typed <see cref="T:LlmsTxtKit.Core.Parsing.LlmsDocument"/>.
+            </summary>
+            <remarks>
+            <para>
+            The parser is behaviorally aligned with the reference Python implementation
+            (<c>miniparse.py</c> from <c>AnswerDotAI/llms-txt</c>). Key behavioral details:
+            </para>
+            <list type="bullet">
+            <item>Sections are delimited by H2 headings only (<c>^##\s+</c>). H3+ headings
+            are treated as content within the parent section.</item>
+            <item>The blockquote summary captures a single line (<c>^&gt;\s*(.+)$</c>).</item>
+            <item>The "Optional" section check is case-sensitive and exact-match.</item>
+            <item>Link entries follow the pattern:
+            <c>-\s*\[title\](url)(?::\s*description)?</c>.</item>
+            <item>Freeform content between the blockquote and first H2 is captured as a
+            single blob (the "info" field in the reference implementation).</item>
+            </list>
+            <para>
+            The parser never throws on malformed input. Instead, it returns an
+            <see cref="T:LlmsTxtKit.Core.Parsing.LlmsDocument"/> with whatever it could extract, plus
+            <see cref="T:LlmsTxtKit.Core.Parsing.ParseDiagnostic"/> entries for any issues encountered.
+            Only programming errors (null input) throw exceptions.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:LlmsTxtKit.Core.Parsing.LlmsDocumentParser.H1Pattern">
+            <summary>H1 heading: <c># Title text</c>.</summary>
+        </member>
+        <member name="F:LlmsTxtKit.Core.Parsing.LlmsDocumentParser.H2Pattern">
+            <summary>H2 heading: <c>## Section name</c>.</summary>
+        </member>
+        <member name="F:LlmsTxtKit.Core.Parsing.LlmsDocumentParser.BlockquotePattern">
+            <summary>Blockquote line: <c>&gt; Summary text</c>.</summary>
+        </member>
+        <member name="F:LlmsTxtKit.Core.Parsing.LlmsDocumentParser.EntryPattern">
+            <summary>
+            Link entry: <c>- [Title](url)</c> or <c>- [Title](url): Description</c>.
+            Aligned with the reference parser's canonical link pattern.
+            </summary>
+        </member>
+        <member name="M:LlmsTxtKit.Core.Parsing.LlmsDocumentParser.Parse(System.String)">
+            <summary>
+            Parses the provided raw llms.txt content string.
+            </summary>
+            <param name="content">The raw Markdown content of an llms.txt file.</param>
+            <returns>
+            A parsed <see cref="T:LlmsTxtKit.Core.Parsing.LlmsDocument"/> containing the extracted structure and
+            any <see cref="T:LlmsTxtKit.Core.Parsing.ParseDiagnostic"/> entries for issues encountered during parsing.
+            </returns>
+            <exception cref="T:System.ArgumentNullException">
+            Thrown when <paramref name="content"/> is <c>null</c>.
+            Null input is a programming error, not a runtime condition.
+            </exception>
+        </member>
+        <member name="T:LlmsTxtKit.Core.Parsing.LlmsEntry">
+            <summary>
+            Represents a single entry within an llms.txt section — a link to a
+            resource with an optional title and description.
+            </summary>
+            <remarks>
+            Entries are parsed from Markdown list items matching the pattern:
+            <c>- [Title](https://url): Optional description</c>.
+            The colon-separated description is optional per the spec.
+            </remarks>
+            <param name="Url">The link target URI.</param>
+            <param name="Title">The link text, or <c>null</c> if not present.</param>
+            <param name="Description">
+            The text after the colon separator, or <c>null</c> if no description was provided.
+            </param>
+        </member>
+        <member name="M:LlmsTxtKit.Core.Parsing.LlmsEntry.#ctor(System.Uri,System.String,System.String)">
+            <summary>
+            Represents a single entry within an llms.txt section — a link to a
+            resource with an optional title and description.
+            </summary>
+            <remarks>
+            Entries are parsed from Markdown list items matching the pattern:
+            <c>- [Title](https://url): Optional description</c>.
+            The colon-separated description is optional per the spec.
+            </remarks>
+            <param name="Url">The link target URI.</param>
+            <param name="Title">The link text, or <c>null</c> if not present.</param>
+            <param name="Description">
+            The text after the colon separator, or <c>null</c> if no description was provided.
+            </param>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsEntry.Url">
+            <summary>The link target URI.</summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsEntry.Title">
+            <summary>The link text, or <c>null</c> if not present.</summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsEntry.Description">
+            <summary>
+            The text after the colon separator, or <c>null</c> if no description was provided.
+            </summary>
+        </member>
+        <member name="T:LlmsTxtKit.Core.Parsing.LlmsSection">
+            <summary>
+            Represents an H2-delimited section within an llms.txt document.
+            Each section contains a name (the H2 heading text) and zero or more
+            <see cref="T:LlmsTxtKit.Core.Parsing.LlmsEntry"/> items representing linked resources.
+            </summary>
+            <param name="Name">The H2 heading text that identifies this section.</param>
+            <param name="IsOptional">
+            <c>true</c> if this section is titled exactly "Optional" (case-sensitive).
+            Optional sections may be skipped when generating abbreviated context.
+            </param>
+            <param name="Entries">The ordered list of link entries in this section.</param>
+        </member>
+        <member name="M:LlmsTxtKit.Core.Parsing.LlmsSection.#ctor(System.String,System.Boolean,System.Collections.Generic.IReadOnlyList{LlmsTxtKit.Core.Parsing.LlmsEntry})">
+            <summary>
+            Represents an H2-delimited section within an llms.txt document.
+            Each section contains a name (the H2 heading text) and zero or more
+            <see cref="T:LlmsTxtKit.Core.Parsing.LlmsEntry"/> items representing linked resources.
+            </summary>
+            <param name="Name">The H2 heading text that identifies this section.</param>
+            <param name="IsOptional">
+            <c>true</c> if this section is titled exactly "Optional" (case-sensitive).
+            Optional sections may be skipped when generating abbreviated context.
+            </param>
+            <param name="Entries">The ordered list of link entries in this section.</param>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsSection.Name">
+            <summary>The H2 heading text that identifies this section.</summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsSection.IsOptional">
+            <summary>
+            <c>true</c> if this section is titled exactly "Optional" (case-sensitive).
+            Optional sections may be skipped when generating abbreviated context.
+            </summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.LlmsSection.Entries">
+            <summary>The ordered list of link entries in this section.</summary>
+        </member>
+        <member name="T:LlmsTxtKit.Core.Parsing.DiagnosticSeverity">
+            <summary>
+            Indicates the severity of a parse diagnostic.
+            </summary>
+        </member>
+        <member name="F:LlmsTxtKit.Core.Parsing.DiagnosticSeverity.Warning">
+            <summary>
+            A non-fatal issue. The document was parsed successfully but contains
+            content that may not conform to the llms.txt specification.
+            </summary>
+        </member>
+        <member name="F:LlmsTxtKit.Core.Parsing.DiagnosticSeverity.Error">
+            <summary>
+            A structural problem that indicates the document is invalid
+            per the llms.txt specification (e.g., missing required H1 title).
+            </summary>
+        </member>
+        <member name="T:LlmsTxtKit.Core.Parsing.ParseDiagnostic">
+            <summary>
+            Represents a single diagnostic message produced during parsing.
+            The parser never throws on malformed input; instead, it collects
+            diagnostics that callers can inspect to determine document quality.
+            </summary>
+            <param name="Severity">The severity level of this diagnostic.</param>
+            <param name="Message">A human-readable description of the issue.</param>
+            <param name="Line">
+            The 1-based line number where the issue was detected, or <c>null</c>
+            if the issue is not localized to a specific line.
+            </param>
+        </member>
+        <member name="M:LlmsTxtKit.Core.Parsing.ParseDiagnostic.#ctor(LlmsTxtKit.Core.Parsing.DiagnosticSeverity,System.String,System.Nullable{System.Int32})">
+            <summary>
+            Represents a single diagnostic message produced during parsing.
+            The parser never throws on malformed input; instead, it collects
+            diagnostics that callers can inspect to determine document quality.
+            </summary>
+            <param name="Severity">The severity level of this diagnostic.</param>
+            <param name="Message">A human-readable description of the issue.</param>
+            <param name="Line">
+            The 1-based line number where the issue was detected, or <c>null</c>
+            if the issue is not localized to a specific line.
+            </param>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.ParseDiagnostic.Severity">
+            <summary>The severity level of this diagnostic.</summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.ParseDiagnostic.Message">
+            <summary>A human-readable description of the issue.</summary>
+        </member>
+        <member name="P:LlmsTxtKit.Core.Parsing.ParseDiagnostic.Line">
+            <summary>
+            The 1-based line number where the issue was detected, or <c>null</c>
+            if the issue is not localized to a specific line.
+            </summary>
+        </member>
+    </members>
+</doc>
