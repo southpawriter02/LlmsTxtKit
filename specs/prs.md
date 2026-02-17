@@ -9,7 +9,7 @@
 
 ## 1. Problem Statement
 
-The `/llms.txt` standard was designed to help AI systems discover and retrieve clean, curated Markdown content from websites at inference time. Over 844,000 websites have adopted some form of the standard, including Anthropic, Cloudflare, Stripe, and Vercel. The developer documentation sector has embraced it enthusiastically.
+The `/llms.txt` standard was designed to help AI systems discover and retrieve clean, curated Markdown content from websites at inference time. Community directories list hundreds of implementations (~784 on llmstxt.site), while an independent Majestic Million crawl found only 105 out of 1,000,000 top websites (0.011%) had implemented the standard as of May 2025. Despite these modest absolute numbers, notable adopters include Anthropic, Cloudflare, Stripe, and Vercel, and the developer documentation sector has embraced it enthusiastically.
 
 But two concrete problems prevent most .NET developers from working with llms.txt programmatically:
 
