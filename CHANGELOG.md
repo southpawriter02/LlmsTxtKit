@@ -9,6 +9,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-02-17
+
+### Added
+
+- **Structured logging throughout the Core library** via optional `ILogger<T>` parameters on all major service classes. Uses `Microsoft.Extensions.Logging.Abstractions` (lightweight, no runtime cost when logging is disabled). All parameters default to `NullLogger<T>.Instance` for full backward compatibility — existing callers require zero code changes.
+  - **`LlmsTxtFetcher`** — Logs request URLs, timeout/retry decisions (with attempt counts and backoff delays), WAF detection results (vendor identification), DNS failures, HTTP errors, response body size limit enforcement, and final classification outcomes. Uses `LogDebug` for flow-level decisions, `LogInformation` for successful fetches with metrics (status code, duration, body size), and `LogWarning` for failures (timeouts, DNS, WAF blocks, HTTP errors).
+  - **`ContextGenerator`** — Logs section eligibility decisions (Optional section skipping), per-entry fetch results (URL, raw/cleaned sizes), fetch failures with URLs and error messages, token budget application (sections omitted/truncated), and final generation metrics (token count, sections included/omitted/truncated, fetch error count).
+  - **`LlmsTxtCache`** — Logs cache hits (in-memory vs. backing store, expired flag), misses, backing store promotion, entry sets with expiry times, backing store persistence, and LRU eviction events (domain evicted, last access time, store size after).
+  - **`LlmsDocumentValidator`** — Logs validation start (title, rule count, check options), per-rule issue counts (only when non-zero), and validation summary (isValid, error count, warning count).
+  - **`FileCacheBackingStore`** — Logs file save operations (key, path, size), and surfaces previously-silent error paths: corrupted cache files (`JsonException`) and I/O errors (`IOException`) as `LogWarning` entries instead of silently returning null.
+  - **`LlmsDocumentParser`** — Accepts optional `ILogger` parameter on the `Parse()` method. When provided, surfaces parse diagnostics (errors and warnings with line numbers) as log entries in addition to including them in the `Diagnostics` collection. Logs parse completion with structural summary (title, section count, entry count, diagnostic count).
+- **`Microsoft.Extensions.Logging.Abstractions` NuGet dependency** in `LlmsTxtKit.Core.csproj` (v9.0.0). This is the lightest possible logging abstraction — it provides `ILogger<T>`, `NullLogger<T>`, and structured logging support with zero runtime allocation when logging is disabled. No dependency on any concrete logging provider.
+- **DI wiring for loggers** in `ServerConfiguration.cs` — All Core service factory registrations now resolve `ILogger<T>` from DI and pass it through to constructors. The MCP server's existing logging infrastructure (configured to write to stderr) automatically flows through to Core services.
+- **40 new unit tests** (total count: 217, up from 177) filling coverage gaps identified in the v0.9.0 audit:
+  - **6 parameterized parser tests** (`[Theory]` with `[InlineData]`): Line ending variations (\n, \r\n, mixed), entry URL formats (query strings, fragments), freeform region link handling, H2 trailing whitespace trimming, consecutive blockquote behavior, and Optional section case-sensitivity.
+  - **4 cache edge case tests**: TTL=1ms and TTL=0 expiration, LRU eviction with recent-access tracking (verifies the correct entry is evicted), InvalidateAsync idempotency on non-existent domains, and ClearAsync state verification.
+  - **5 context generation edge case tests**: Nested HTML comment handling, multiple consecutive comment removal, DefaultTokenEstimator edge cases (empty string, single word, exact multiples, ceiling behavior), all-entries-fail error placeholder verification, and sentence-boundary truncation fallback to word-level truncation.
+  - **10 validation rule isolation tests**: BlockquoteMalformedRule (with/without diagnostics), UnexpectedHeadingLevelRule (H3 and H4+, clean documents), ContentOutsideStructureRule (single/multiple orphaned lines, clean structure), network rule skipping verification (`[Theory]` across 3 rule types), and issue severity correctness (`[Theory]` across Error vs. Warning rules).
+  - **First use of `[Theory]`/`[InlineData]`** parameterized testing pattern in the project — 15 of the 40 new tests are parameterized, each covering multiple data points per test method.
+
+### Changed
+
+- **Core service constructors now accept optional `ILogger<T>` parameters** — Non-breaking API change. All new parameters are optional with `null` defaults. Existing code that creates Core services without logging continues to work identically. The `LlmsDocumentParser.Parse()` method signature changed from `Parse(string)` to `Parse(string, ILogger?)` — also backward-compatible since the logger parameter is optional.
+
+## [0.9.0] - 2026-02-17
+
+### Added
+
+- **Integration test project** (`LlmsTxtKit.Integration.Tests`) exercising multi-step, cross-component workflows end-to-end. Unlike unit tests which verify individual components in isolation, integration tests validate that the full stack works together: MCP tools → Core services → HTTP layer → JSON serialization. This catches issues like incorrect DI wiring, serialization mismatches, and cross-component state leakage that unit tests miss.
+- **`IntegrationMockHandler`** — URL-aware mock `HttpMessageHandler` for integration tests. Delegates to a factory function that inspects the request URL and returns different responses, simulating a realistic web server with multiple endpoints.
+- **`IntegrationContentFetcher`** — `IContentFetcher` implementation backed by mock `HttpClient`, bridging the content-fetching interface to the mock HTTP infrastructure so `ContextGenerator` and `FetchSectionTool` share the same mocked HTTP pipeline.
+- **7 integration test scenarios** in `EndToEndWorkflowTests.cs`:
+  - **End-to-end discovery workflow**: Simulates a 3-step agent interaction (discover → fetch section → generate context) against a realistic llms.txt document with multiple sections. Verifies that steps 2 and 3 use the cache populated by step 1 (`fromCache: true`), confirming zero redundant HTTP requests across the full agent workflow.
+  - **WAF block graceful degradation**: Simulates a Cloudflare WAF 403 block (with `cf-ray` and `server: cloudflare` headers) and verifies all four domain-based MCP tools (discover, fetch_section, validate, context) return structured JSON error responses with `success: false` — no unhandled exceptions, no unstructured error strings.
+  - **Cache hit within TTL**: Uses a request-counting handler (`Interlocked.Increment`) to verify that a second `Discover` call within TTL returns from cache with zero additional HTTP requests (`requestCount` stays at 1).
+  - **Stale-while-revalidate**: Pre-populates the cache with an already-expired entry, then verifies that with SWR enabled, the stale data is still retrievable immediately rather than blocking on a refetch.
+  - **Token budget end-to-end**: Generates full context (unlimited), then regenerates with a budget of half the tokens. Asserts `approximateTokenCount <= budget` and at least one section included.
+  - **Validation structural checks**: Tests both a well-formed document (`isValid: true`, zero errors) and a malformed document (missing H1 title) through the full Validate tool pipeline, verifying issue structure with severity and rule fields.
+  - **Large file handling**: Feeds a synthetic 1000-entry llms.txt (10 sections × 100 entries) through the full pipeline (parse → validate → context with token budget). Verifies correctness and completion within 30-second time bounds. Actual execution: ~26ms — well within bounds.
+
+### Changed
+
+- **Version aligned**: Both `LlmsTxtKit.Core` and `LlmsTxtKit.Mcp` packages now share a unified version number (0.9.0) to reduce confusion when the two packages are installed together. Previously, Core was at 0.5.0 while Mcp was at 0.8.0.
+- **User-Agent updated** to `LlmsTxtKit/0.9.0` in `ServerConfiguration.cs` default.
+
+### Verified
+
+- **Documentation completeness audit**: 100% XML documentation coverage on all public types, methods, properties, and interfaces across both Core (35 source files) and Mcp (7 source files). Build with `-warnaserror` produces zero warnings. README covers all 5 MCP tools with usage examples. Design Spec §§ 3.1–3.5 fully documents all tool specifications.
+- **NuGet packaging validation**: Both packages pack successfully. `LlmsTxtKit.Core.0.9.0.nupkg` (58 KB) and `LlmsTxtKit.Mcp.0.9.0.nupkg` (37 KB). Known advisory: NU5104 on Mcp package due to prerelease dependency on `ModelContextProtocol 0.8.0-preview.1` — expected until the MCP SDK reaches stable release.
+- **Full test suite**: 177 tests passing across 3 projects (97 Core + 73 MCP + 7 Integration). Build time: ~2.5s. Test run time: ~2.5s.
+
 ## [0.8.0] - 2026-02-17
 
 ### Added

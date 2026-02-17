@@ -24,7 +24,7 @@ namespace LlmsTxtKit.Mcp.Server;
 /// Configuration is read from environment variables with sensible defaults:
 /// </para>
 /// <list type="bullet">
-/// <item><c>LLMSTXTKIT_USER_AGENT</c> — Custom User-Agent string (default: "LlmsTxtKit/0.8.0")</item>
+/// <item><c>LLMSTXTKIT_USER_AGENT</c> — Custom User-Agent string (default: "LlmsTxtKit/0.9.1")</item>
 /// <item><c>LLMSTXTKIT_TIMEOUT_SECONDS</c> — HTTP fetch timeout (default: 15)</item>
 /// <item><c>LLMSTXTKIT_MAX_RETRIES</c> — Fetch retry count (default: 2)</item>
 /// <item><c>LLMSTXTKIT_CACHE_TTL_MINUTES</c> — Cache TTL in minutes (default: 60)</item>
@@ -60,7 +60,7 @@ public static class ServerConfiguration
         services.AddSingleton(fetcherOptions);
 
         // LlmsTxtFetcher: fetches llms.txt files by domain
-        // Constructor signature: LlmsTxtFetcher(FetcherOptions?, HttpClient?)
+        // Constructor signature: LlmsTxtFetcher(FetcherOptions?, HttpClient?, ILogger<LlmsTxtFetcher>?)
         services.AddSingleton(sp =>
         {
             var logger = sp.GetRequiredService<ILogger<LlmsTxtFetcher>>();
@@ -69,7 +69,7 @@ public static class ServerConfiguration
             logger.LogDebug(
                 "Initializing LlmsTxtFetcher with UserAgent={UserAgent}, Timeout={Timeout}s, MaxRetries={MaxRetries}",
                 options.UserAgent, options.TimeoutSeconds, options.MaxRetries);
-            return new LlmsTxtFetcher(options, httpClient);
+            return new LlmsTxtFetcher(options, httpClient, logger);
         });
 
         // CacheOptions: configuration for the document cache
@@ -83,11 +83,15 @@ public static class ServerConfiguration
             logger.LogDebug(
                 "Initializing LlmsTxtCache with TTL={Ttl}, MaxEntries={MaxEntries}, StaleWhileRevalidate={Stale}",
                 options.DefaultTtl, options.MaxEntries, options.StaleWhileRevalidate);
-            return new LlmsTxtCache(options);
+            return new LlmsTxtCache(options, logger);
         });
 
         // LlmsDocumentValidator: validation orchestrator with all built-in rules
-        services.AddSingleton<LlmsDocumentValidator>();
+        services.AddSingleton(sp =>
+        {
+            var logger = sp.GetRequiredService<ILogger<LlmsDocumentValidator>>();
+            return new LlmsDocumentValidator(logger: logger);
+        });
 
         // IContentFetcher: content fetcher for context generation
         services.AddSingleton<IContentFetcher>(sp =>
@@ -100,7 +104,8 @@ public static class ServerConfiguration
         services.AddSingleton(sp =>
         {
             var fetcher = sp.GetRequiredService<IContentFetcher>();
-            return new ContextGenerator(fetcher);
+            var logger = sp.GetRequiredService<ILogger<ContextGenerator>>();
+            return new ContextGenerator(fetcher, logger);
         });
 
         return services;
@@ -118,7 +123,7 @@ public static class ServerConfiguration
     {
         // FetcherOptions uses init-only properties, so all config must be
         // set in the object initializer. Read env vars first, then build.
-        var userAgent = GetEnvString("LLMSTXTKIT_USER_AGENT", "LlmsTxtKit/0.8.0");
+        var userAgent = GetEnvString("LLMSTXTKIT_USER_AGENT", "LlmsTxtKit/0.9.1");
         var timeoutStr = Environment.GetEnvironmentVariable("LLMSTXTKIT_TIMEOUT_SECONDS");
         var retriesStr = Environment.GetEnvironmentVariable("LLMSTXTKIT_MAX_RETRIES");
 

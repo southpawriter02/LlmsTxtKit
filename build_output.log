@@ -1,0 +1,13 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  LlmsTxtKit.Core -> /sessions/brave-gracious-rubin/LlmsTxtKit-work/src/LlmsTxtKit.Core/bin/Debug/net9.0/LlmsTxtKit.Core.dll
+  LlmsTxtKit.Mcp -> /sessions/brave-gracious-rubin/LlmsTxtKit-work/src/LlmsTxtKit.Mcp/bin/Debug/net9.0/LlmsTxtKit.Mcp.dll
+  LlmsTxtKit.Core.Tests -> /sessions/brave-gracious-rubin/LlmsTxtKit-work/tests/LlmsTxtKit.Core.Tests/bin/Debug/net9.0/LlmsTxtKit.Core.Tests.dll
+  LlmsTxtKit.Integration.Tests -> /sessions/brave-gracious-rubin/LlmsTxtKit-work/tests/LlmsTxtKit.Integration.Tests/bin/Debug/net9.0/LlmsTxtKit.Integration.Tests.dll
+  LlmsTxtKit.Mcp.Tests -> /sessions/brave-gracious-rubin/LlmsTxtKit-work/tests/LlmsTxtKit.Mcp.Tests/bin/Debug/net9.0/LlmsTxtKit.Mcp.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:01.04

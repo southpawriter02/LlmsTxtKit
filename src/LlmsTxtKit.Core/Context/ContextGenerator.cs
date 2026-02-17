@@ -1,6 +1,8 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using LlmsTxtKit.Core.Parsing;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace LlmsTxtKit.Core.Context;
 
@@ -41,6 +43,9 @@ public sealed class ContextGenerator
     /// <summary>The content fetcher used to retrieve linked Markdown.</summary>
     private readonly IContentFetcher _fetcher;
 
+    /// <summary>Logger for diagnostic output during context generation.</summary>
+    private readonly ILogger<ContextGenerator> _logger;
+
     /// <summary>Pattern matching HTML comments: &lt;!-- ... --&gt;</summary>
     private static readonly Regex HtmlCommentPattern = new(
         @"<!--[\s\S]*?-->",
@@ -61,9 +66,14 @@ public sealed class ContextGenerator
     /// The content fetcher for retrieving linked Markdown. If <c>null</c>,
     /// a default <see cref="HttpContentFetcher"/> is created.
     /// </param>
-    public ContextGenerator(IContentFetcher? fetcher = null)
+    /// <param name="logger">
+    /// Optional logger for diagnostic output. Logs content fetching, token budget
+    /// decisions, section drops/truncations, and final generation metrics.
+    /// </param>
+    public ContextGenerator(IContentFetcher? fetcher = null, ILogger<ContextGenerator>? logger = null)
     {
         _fetcher = fetcher ?? new HttpContentFetcher();
+        _logger = logger ?? NullLogger<ContextGenerator>.Instance;
     }
 
     /// <summary>
@@ -94,6 +104,9 @@ public sealed class ContextGenerator
         var estimator = opts.TokenEstimator ?? DefaultTokenEstimator;
         var fetchErrors = new List<FetchError>();
 
+        _logger.LogDebug("Generating context: title={Title}, sections={SectionCount}, maxTokens={MaxTokens}, includeOptional={IncludeOptional}, wrapXml={WrapXml}",
+            document.Title, document.Sections.Count, opts.MaxTokens?.ToString() ?? "unlimited", opts.IncludeOptional, opts.WrapSectionsInXml);
+
         // ---------------------------------------------------------------
         // Phase 1: Fetch content for each entry in each eligible section
         // ---------------------------------------------------------------
@@ -103,8 +116,12 @@ public sealed class ContextGenerator
         {
             // Skip Optional sections when IncludeOptional is false
             if (IsOptionalSection(section) && !opts.IncludeOptional)
+            {
+                _logger.LogDebug("Skipping Optional section={Section} (includeOptional=false)", section.Name);
                 continue;
+            }
 
+            _logger.LogDebug("Fetching content for section={Section}, entryCount={EntryCount}", section.Name, section.Entries.Count);
             var entryContents = new List<string>();
 
             foreach (var entry in section.Entries)
@@ -115,6 +132,8 @@ public sealed class ContextGenerator
                 if (fetchResult.IsSuccess)
                 {
                     var cleaned = CleanContent(fetchResult.Content!);
+                    _logger.LogDebug("Fetched entry url={Url}, rawSize={RawSize}, cleanedSize={CleanedSize}",
+                        entry.Url, fetchResult.Content!.Length, cleaned.Length);
                     entryContents.Add(cleaned);
                 }
                 else
@@ -123,6 +142,7 @@ public sealed class ContextGenerator
                     var placeholder = $"[Error fetching {entry.Url}: {fetchResult.ErrorMessage}]";
                     entryContents.Add(placeholder);
                     fetchErrors.Add(new FetchError(entry.Url, fetchResult.ErrorMessage!));
+                    _logger.LogWarning("Failed to fetch entry url={Url}: {Error}", entry.Url, fetchResult.ErrorMessage);
                 }
             }
 
@@ -142,9 +162,15 @@ public sealed class ContextGenerator
 
         if (opts.MaxTokens.HasValue)
         {
+            _logger.LogDebug("Applying token budget: maxTokens={MaxTokens}", opts.MaxTokens.Value);
             ApplyTokenBudget(
                 sectionContents, opts.MaxTokens.Value, estimator, opts.WrapSectionsInXml,
                 sectionsOmitted, sectionsTruncated);
+
+            if (sectionsOmitted.Count > 0)
+                _logger.LogDebug("Sections omitted by budget: [{Omitted}]", string.Join(", ", sectionsOmitted));
+            if (sectionsTruncated.Count > 0)
+                _logger.LogDebug("Sections truncated by budget: [{Truncated}]", string.Join(", ", sectionsTruncated));
         }
 
         // ---------------------------------------------------------------
@@ -181,6 +207,9 @@ public sealed class ContextGenerator
 
         var finalContent = output.ToString().TrimEnd();
         var tokenCount = estimator(finalContent);
+
+        _logger.LogInformation("Context generation complete: tokenCount={TokenCount}, sectionsIncluded={Included}, sectionsOmitted={Omitted}, sectionsTruncated={Truncated}, fetchErrors={Errors}",
+            tokenCount, sectionsIncluded.Count, sectionsOmitted.Count, sectionsTruncated.Count, fetchErrors.Count);
 
         return new ContextResult
         {

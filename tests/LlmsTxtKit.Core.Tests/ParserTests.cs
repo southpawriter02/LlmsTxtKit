@@ -285,4 +285,130 @@ public class ParserTests
         var error = Assert.Single(doc.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error));
         Assert.Contains("No H1 title found", error.Message);
     }
+
+    // ---------------------------------------------------------------
+    // Additional Edge Cases and Specification Tests
+    // ---------------------------------------------------------------
+
+    [Theory]
+    [InlineData("# Title\n> Summary.\n## Section\n- [Link](https://example.com): Desc\n")]
+    [InlineData("# Title\r\n> Summary.\r\n## Section\r\n- [Link](https://example.com): Desc\r\n")]
+    [InlineData("# Title\n> Summary.\r\n## Section\n- [Link](https://example.com): Desc\r\n")]
+    public void Parse_HandlesLineEndingVariations(string content)
+    {
+        var doc = LlmsDocumentParser.Parse(content);
+
+        Assert.Equal("Title", doc.Title);
+        Assert.Equal("Summary.", doc.Summary);
+        Assert.Single(doc.Sections);
+        Assert.Equal("Section", doc.Sections[0].Name);
+        Assert.Single(doc.Sections[0].Entries);
+        Assert.Equal("Link", doc.Sections[0].Entries[0].Title);
+    }
+
+    [Theory]
+    [InlineData("https://example.com/api?v=2")]
+    [InlineData("https://example.com/doc#section")]
+    [InlineData("https://example.com/resource?v=2#section")]
+    public void Parse_EntryUrlFormats_Parsed(string url)
+    {
+        var content = $"""
+            # Project
+            > Summary.
+            ## Docs
+            - [Resource]({url}): Description
+            """;
+
+        var doc = LlmsDocumentParser.Parse(content);
+
+        var entry = Assert.Single(doc.Sections[0].Entries);
+        Assert.Equal("Resource", entry.Title);
+        Assert.Equal(new Uri(url), entry.Url);
+        Assert.Equal("Description", entry.Description);
+    }
+
+    [Fact]
+    public void Parse_LinkEntriesBeforeFirstH2_TreatedAsFreeform()
+    {
+        const string content = """
+            # Project
+            > Summary.
+            - [Link1](https://example.com/link1): Before section
+            Some freeform text here.
+            ## Docs
+            - [Link2](https://example.com/link2): In section
+            """;
+
+        var doc = LlmsDocumentParser.Parse(content);
+
+        // Links before first H2 should be in freeform, not parsed as entries
+        Assert.NotNull(doc.FreeformContent);
+        Assert.Contains("- [Link1]", doc.FreeformContent);
+        Assert.Contains("Before section", doc.FreeformContent);
+        Assert.Contains("Some freeform text here", doc.FreeformContent);
+
+        // Only the link in the section should be parsed as an entry
+        Assert.Single(doc.Sections);
+        var entry = Assert.Single(doc.Sections[0].Entries);
+        Assert.Equal("Link2", entry.Title);
+    }
+
+    [Fact]
+    public void Parse_H2WithTrailingWhitespace_NameTrimmed()
+    {
+        const string content = """
+            # Project
+            > Summary.
+            ## Section
+            - [Guide](https://example.com/guide): Guide
+            """;
+
+        var doc = LlmsDocumentParser.Parse(content);
+
+        var section = Assert.Single(doc.Sections);
+        Assert.Equal("Section", section.Name);
+        Assert.False(section.IsOptional);
+    }
+
+    [Fact]
+    public void Parse_ConsecutiveBlockquotes_OnlyFirstCapturedAsSummary()
+    {
+        const string content = """
+            # Project
+            > First blockquote is the summary.
+            > Second blockquote ignored.
+            > Third blockquote also ignored.
+            ## Docs
+            - [Guide](https://example.com/guide): Guide
+            """;
+
+        var doc = LlmsDocumentParser.Parse(content);
+
+        Assert.Equal("First blockquote is the summary.", doc.Summary);
+        // Subsequent blockquotes should be in freeform content
+        Assert.NotNull(doc.FreeformContent);
+        Assert.Contains("Second blockquote ignored", doc.FreeformContent);
+        Assert.Contains("Third blockquote also ignored", doc.FreeformContent);
+    }
+
+    [Theory]
+    [InlineData("Optional", true)]
+    [InlineData("optional", false)]
+    [InlineData("OPTIONAL", false)]
+    [InlineData("OptionalResources", false)]
+    public void Parse_OptionalSectionCaseSensitive(string sectionName, bool expectedOptional)
+    {
+        var content = $"""
+            # Project
+            > Summary.
+            ## {sectionName}
+            - [Res](https://example.com/res): Resource
+            """;
+
+        var doc = LlmsDocumentParser.Parse(content);
+
+        var section = Assert.Single(doc.Sections);
+        Assert.Equal(sectionName, section.Name);
+        Assert.Equal(expectedOptional, section.IsOptional);
+    }
 }

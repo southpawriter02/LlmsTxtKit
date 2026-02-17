@@ -11,7 +11,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>LlmsTxtKit.Mcp</PackageId>
-    <Version>0.8.0</Version>
+    <Version>0.9.1</Version>
     <Authors>Ryan</Authors>
     <Description>
       An MCP (Model Context Protocol) server that exposes llms.txt capabilities

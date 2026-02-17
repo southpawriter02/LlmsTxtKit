@@ -479,4 +479,122 @@ public class ContextTests
 
         Assert.True(result.ApproximateTokenCount > 0);
     }
+
+    // ===============================================================
+    // CleanContent — Edge Cases with Nested/Multiple Comments
+    // ===============================================================
+
+    /// <summary>
+    /// CleanContent handles overlapping HTML comment patterns correctly.
+    /// Nested comment delimiters should be removed along with the outer comment.
+    /// </summary>
+    [Fact]
+    public void CleanContent_NestedHtmlComments_RemovesAllComments()
+    {
+        var content = "before <!-- outer <!-- inner --> after";
+        var cleaned = ContextGenerator.CleanContent(content);
+
+        // All comment markers should be stripped
+        Assert.DoesNotContain("<!--", cleaned);
+        Assert.DoesNotContain("-->", cleaned);
+        // Actual behavior depends on regex; typically the first <!-- ... --> is matched
+        Assert.Contains("before", cleaned);
+    }
+
+    /// <summary>
+    /// CleanContent removes multiple consecutive HTML comments.
+    /// </summary>
+    [Fact]
+    public void CleanContent_MultipleConsecutiveComments_RemovesAll()
+    {
+        var content = "text <!-- c1 --> middle <!-- c2 --> end";
+        var cleaned = ContextGenerator.CleanContent(content);
+
+        Assert.DoesNotContain("<!--", cleaned);
+        Assert.DoesNotContain("-->", cleaned);
+        Assert.Contains("text", cleaned);
+        Assert.Contains("middle", cleaned);
+        Assert.Contains("end", cleaned);
+    }
+
+    // ===============================================================
+    // DefaultTokenEstimator — Edge Cases
+    // ===============================================================
+
+    /// <summary>
+    /// The DefaultTokenEstimator handles edge cases: empty string, single word, etc.
+    /// </summary>
+    [Theory]
+    [InlineData("", 0)]                                    // Empty → 0
+    [InlineData("hello", 1)]                              // Single word → 1 (min 1)
+    [InlineData("one two three four", 1)]                 // 4 words / 4 = 1
+    [InlineData("one two three four five", 2)]            // 5 words / 4 = 1.25 → ceiling = 2
+    public void DefaultTokenEstimator_EdgeCases_ReturnsCorrectCount(string text, int expectedTokens)
+    {
+        var estimate = ContextGenerator.DefaultTokenEstimator(text);
+        Assert.Equal(expectedTokens, estimate);
+    }
+
+    // ===============================================================
+    // Fetch Failures — All Entries Fail
+    // ===============================================================
+
+    /// <summary>
+    /// When all entries in a section fail to fetch, the section contains
+    /// error placeholders for each URL, and FetchErrors contains all URLs.
+    /// </summary>
+    [Fact]
+    public async Task GenerateAsync_AllEntriesFail_ContainsErrorPlaceholdersForAll()
+    {
+        var doc = LlmsDocumentParser.Parse(
+            """
+            # Test Site
+            > Summary.
+            ## Docs
+            - [Broken1](https://example.com/broken1.md): broken
+            - [Broken2](https://example.com/broken2.md): broken
+            """);
+        var fetcher = new MockContentFetcher()
+            .WithFailure("https://example.com/broken1.md")
+            .WithFailure("https://example.com/broken2.md");
+        var generator = new ContextGenerator(fetcher);
+
+        var result = await generator.GenerateAsync(doc);
+
+        // Both error placeholders should be present
+        Assert.Contains("[Error fetching", result.Content);
+        Assert.Equal(2, result.FetchErrors.Count);
+        Assert.Contains(new Uri("https://example.com/broken1.md"),
+            result.FetchErrors.Select(e => e.Url));
+        Assert.Contains(new Uri("https://example.com/broken2.md"),
+            result.FetchErrors.Select(e => e.Url));
+    }
+
+    // ===============================================================
+    // Truncation at Word Boundary
+    // ===============================================================
+
+    /// <summary>
+    /// When a single sentence exceeds the budget, TruncateAtSentenceBoundary
+    /// falls back to word-level truncation to make progress.
+    /// </summary>
+    [Fact]
+    public void TruncateAtSentenceBoundary_SingleSentenceExceedsBudget_FallsBackToWordBoundary()
+    {
+        // A single long sentence that exceeds the budget
+        var content = "This is a very long sentence that contains many words and should definitely exceed the budget when estimated with a simple word counter.";
+        var estimator = (string text) => text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+
+        // Budget that's less than the full sentence but more than zero
+        var maxTokens = 5;
+
+        var truncated = ContextGenerator.TruncateAtSentenceBoundary(content, maxTokens, estimator);
+
+        // Truncated should be non-empty but shorter than original
+        Assert.NotEmpty(truncated);
+        Assert.True(truncated.Length < content.Length);
+        // Should not end mid-word (should be word-boundary truncated)
+        Assert.False(truncated.EndsWith(" "));
+        Assert.DoesNotContain("  ", truncated); // No double spaces
+    }
 }

@@ -3,6 +3,8 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using LlmsTxtKit.Core.Parsing;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace LlmsTxtKit.Core.Fetching;
 
@@ -49,6 +51,9 @@ public sealed class LlmsTxtFetcher : IDisposable
     /// <summary>Configuration for this fetcher instance.</summary>
     private readonly FetcherOptions _options;
 
+    /// <summary>Logger for diagnostic output at all decision points.</summary>
+    private readonly ILogger<LlmsTxtFetcher> _logger;
+
     /// <summary>
     /// Whether this instance owns the HttpClient (i.e., created it internally)
     /// and should dispose it. When an external client is injected, we don't dispose it.
@@ -74,9 +79,16 @@ public sealed class LlmsTxtFetcher : IDisposable
     /// <c>IHttpClientFactory</c> for proper connection lifecycle management
     /// in long-running applications.
     /// </param>
-    public LlmsTxtFetcher(FetcherOptions? options = null, HttpClient? httpClient = null)
+    /// <param name="logger">
+    /// Optional logger for diagnostic output. If <c>null</c>, a no-op logger
+    /// is used. When provided, the fetcher logs at every decision point:
+    /// request URLs, timeouts, retry attempts, WAF detection results, DNS
+    /// failures, response sizes, and classification outcomes.
+    /// </param>
+    public LlmsTxtFetcher(FetcherOptions? options = null, HttpClient? httpClient = null, ILogger<LlmsTxtFetcher>? logger = null)
     {
         _options = options ?? new FetcherOptions();
+        _logger = logger ?? NullLogger<LlmsTxtFetcher>.Instance;
 
         if (httpClient is not null)
         {
@@ -144,6 +156,8 @@ public sealed class LlmsTxtFetcher : IDisposable
         // -- Build the target URL --
         // Per the spec, llms.txt lives at the root path of the domain.
         var url = $"https://{domain}/llms.txt";
+        _logger.LogDebug("Fetching llms.txt for domain={Domain}, url={Url}, timeout={Timeout}s, maxRetries={MaxRetries}",
+            domain, url, _options.TimeoutSeconds, _options.MaxRetries);
 
         // -- Start the stopwatch for Duration tracking --
         var stopwatch = Stopwatch.StartNew();
@@ -165,6 +179,8 @@ public sealed class LlmsTxtFetcher : IDisposable
                     (baseDelayMs / 10) + 1);
                 int delayMs = Math.Max(0, baseDelayMs + jitterMs);
 
+                _logger.LogDebug("Retry attempt {Attempt}/{MaxAttempts} for domain={Domain} after {Delay}ms backoff",
+                    attempt + 1, maxAttempts, domain, delayMs);
                 await Task.Delay(delayMs, cancellationToken).ConfigureAwait(false);
             }
 
@@ -188,10 +204,21 @@ public sealed class LlmsTxtFetcher : IDisposable
             // 2. This was the last attempt (no more retries available)
             if (!isTransient || attempt == maxAttempts - 1)
             {
+                if (result.Status == FetchStatus.Success)
+                    _logger.LogInformation("Fetch succeeded for domain={Domain}, status={StatusCode}, duration={Duration}ms, bodySize={BodySize}",
+                        domain, result.StatusCode, result.Duration.TotalMilliseconds, result.RawContent?.Length ?? 0);
+                else if (isTransient && attempt == maxAttempts - 1)
+                    _logger.LogWarning("All {MaxAttempts} attempts exhausted for domain={Domain}, final status={Status}, error={Error}",
+                        maxAttempts, domain, result.Status, result.ErrorMessage);
+                else
+                    _logger.LogDebug("Non-transient result for domain={Domain}, status={Status}, statusCode={StatusCode}",
+                        domain, result.Status, result.StatusCode);
+
                 return result;
             }
 
-            // Otherwise, continue to the next retry attempt.
+            _logger.LogDebug("Transient failure on attempt {Attempt} for domain={Domain}, status={Status} — will retry",
+                attempt + 1, domain, result.Status);
         }
 
         // This should be unreachable — the loop always returns on the last attempt.
@@ -252,6 +279,8 @@ public sealed class LlmsTxtFetcher : IDisposable
             // The per-request timeout fired, not the caller's cancellation token.
             // This is a Timeout result, not a cancellation.
             stopwatch.Stop();
+            _logger.LogWarning("Request timed out for domain={Domain} after {Timeout}s (elapsed={Elapsed}ms)",
+                domain, _options.TimeoutSeconds, stopwatch.ElapsedMilliseconds);
             return new FetchResult
             {
                 Status = FetchStatus.Timeout,
@@ -263,12 +292,14 @@ public sealed class LlmsTxtFetcher : IDisposable
         catch (OperationCanceledException)
         {
             // The caller's cancellation token was triggered. Propagate as-is.
+            _logger.LogDebug("Fetch cancelled by caller for domain={Domain}", domain);
             throw;
         }
         catch (HttpRequestException ex) when (IsDnsFailure(ex))
         {
             // DNS resolution failed — the domain doesn't exist or DNS is broken.
             stopwatch.Stop();
+            _logger.LogWarning("DNS resolution failed for domain={Domain}: {Error}", domain, ex.Message);
             return new FetchResult
             {
                 Status = FetchStatus.DnsFailure,
@@ -281,6 +312,8 @@ public sealed class LlmsTxtFetcher : IDisposable
         {
             // Other HTTP-level failures: TLS errors, connection resets, etc.
             stopwatch.Stop();
+            _logger.LogWarning("HTTP request failed for domain={Domain}, statusCode={StatusCode}: {Error}",
+                domain, (int?)ex.StatusCode, ex.Message);
             return new FetchResult
             {
                 Status = FetchStatus.Error,
@@ -306,6 +339,8 @@ public sealed class LlmsTxtFetcher : IDisposable
         // Check Content-Length header first for a quick rejection
         if (response.Content.Headers.ContentLength > _options.MaxResponseSizeBytes)
         {
+            _logger.LogWarning("Response body too large: Content-Length={ContentLength} exceeds limit={Limit} bytes",
+                response.Content.Headers.ContentLength, _options.MaxResponseSizeBytes);
             return null; // Body too large — don't even read it
         }
 
@@ -333,6 +368,8 @@ public sealed class LlmsTxtFetcher : IDisposable
             {
                 // Response exceeds size limit — return what we have so far.
                 // The caller will still get a partial body for diagnostic purposes.
+                _logger.LogWarning("Response body exceeded size limit during streaming: read={TotalRead} > limit={Limit} bytes",
+                    totalRead, _options.MaxResponseSizeBytes);
                 break;
             }
 
@@ -458,6 +495,8 @@ public sealed class LlmsTxtFetcher : IDisposable
         {
             stopwatch.Stop();
             string? blockReason = IdentifyWafBlock(headers, responseBody);
+            _logger.LogWarning("HTTP 403 Forbidden for domain={Domain}, wafDetected={WafDetected}, blockReason={BlockReason}",
+                domain, blockReason != null, blockReason ?? "WAF vendor could not be identified");
 
             return new FetchResult
             {

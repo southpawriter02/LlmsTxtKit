@@ -2,7 +2,7 @@ namespace LlmsTxtKit.Core.Parsing;
 
 /// <summary>
 /// Represents a fully parsed llms.txt document. This is the primary output
-/// of <see cref="LlmsDocumentParser.Parse(string)"/>.
+/// of <see cref="LlmsDocumentParser"/>.
 /// </summary>
 /// <remarks>
 /// <para>

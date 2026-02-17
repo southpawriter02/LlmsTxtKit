@@ -492,4 +492,115 @@ public class CacheTests : IDisposable
         var cache = new LlmsTxtCache();
         await Assert.ThrowsAsync<ArgumentNullException>(() => cache.SetAsync("example.com", null!));
     }
+
+    // ===============================================================
+    // TTL Edge Cases
+    // ===============================================================
+
+    /// <summary>
+    /// A TTL of 1 millisecond expires almost immediately.
+    /// </summary>
+    [Theory]
+    [InlineData(1)] // 1 ms should expire immediately
+    [InlineData(0)] // 0 ms (TimeSpan.Zero) should be immediately expired
+    public async Task CacheEntry_IsExpired_EdgeCaseTtl_ReturnsTrue(int milliseconds)
+    {
+        var ttl = TimeSpan.FromMilliseconds(milliseconds);
+        var entry = CreateEntry(ttl: ttl);
+
+        // Allow a small delay to ensure expiration for the 1ms case
+        await Task.Delay(2);
+
+        Assert.True(entry.IsExpired());
+    }
+
+    // ===============================================================
+    // LRU Eviction — Access Updates Timestamp
+    // ===============================================================
+
+    /// <summary>
+    /// When an entry is accessed (GetAsync), its LRU timestamp is updated,
+    /// protecting it from eviction. Adding a new entry after accessing one
+    /// evicts the least recently accessed, not the one we just accessed.
+    /// </summary>
+    [Fact]
+    public async Task SetAsync_LruEviction_RespectsRecentAccess()
+    {
+        var options = new CacheOptions { MaxEntries = 3 };
+        var cache = new LlmsTxtCache(options);
+
+        // Add entries A, B, C
+        var entryA = CreateEntry();
+        var entryB = CreateEntry();
+        var entryC = CreateEntry();
+
+        await cache.SetAsync("a.com", entryA);
+        await cache.SetAsync("b.com", entryB);
+        await cache.SetAsync("c.com", entryC);
+
+        Assert.Equal(3, cache.Count);
+
+        // Access A to update its LRU timestamp (makes it recently accessed)
+        var retrieved = await cache.GetAsync("a.com");
+        Assert.NotNull(retrieved);
+
+        // Add D, which should evict B (least recently accessed), not A
+        await cache.SetAsync("d.com", CreateEntry());
+
+        Assert.Equal(3, cache.Count);
+        Assert.NotNull(await cache.GetAsync("a.com")); // A should still be there
+        Assert.Null(await cache.GetAsync("b.com"));    // B should be evicted
+        Assert.NotNull(await cache.GetAsync("c.com")); // C should still be there
+        Assert.NotNull(await cache.GetAsync("d.com")); // D should be there
+    }
+
+    // ===============================================================
+    // InvalidateAsync — Idempotency
+    // ===============================================================
+
+    /// <summary>
+    /// Calling InvalidateAsync on a domain that doesn't exist doesn't throw
+    /// and completes successfully (idempotent operation).
+    /// </summary>
+    [Fact]
+    public async Task InvalidateAsync_IdempotentNonExistentDomain_NoThrow()
+    {
+        var cache = new LlmsTxtCache();
+
+        // Call InvalidateAsync twice on a non-existent domain
+        await cache.InvalidateAsync("never-existed.com");
+        await cache.InvalidateAsync("never-existed.com");
+
+        // Should not throw and cache should still be empty
+        Assert.Equal(0, cache.Count);
+    }
+
+    // ===============================================================
+    // ClearAsync — Verification
+    // ===============================================================
+
+    /// <summary>
+    /// After ClearAsync, the cache is completely empty and subsequent GetAsync calls return null.
+    /// </summary>
+    [Fact]
+    public async Task ClearAsync_VerifiesEmptyState()
+    {
+        var cache = new LlmsTxtCache();
+
+        // Add 3 entries
+        await cache.SetAsync("a.com", CreateEntry());
+        await cache.SetAsync("b.com", CreateEntry());
+        await cache.SetAsync("c.com", CreateEntry());
+
+        Assert.Equal(3, cache.Count);
+
+        // Clear the cache
+        await cache.ClearAsync();
+
+        // Verify it's empty
+        Assert.Equal(0, cache.Count);
+        Assert.Null(await cache.GetAsync("a.com"));
+        Assert.Null(await cache.GetAsync("b.com"));
+        Assert.Null(await cache.GetAsync("c.com"));
+    }
 }

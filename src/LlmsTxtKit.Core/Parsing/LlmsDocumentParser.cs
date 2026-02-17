@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace LlmsTxtKit.Core.Parsing;
 
@@ -58,6 +59,11 @@ public static class LlmsDocumentParser
     /// Parses the provided raw llms.txt content string.
     /// </summary>
     /// <param name="content">The raw Markdown content of an llms.txt file.</param>
+    /// <param name="logger">
+    /// Optional logger for surfacing parse diagnostics as log entries. When provided,
+    /// warnings and errors discovered during parsing are logged in addition to being
+    /// included in the returned <see cref="LlmsDocument.Diagnostics"/> collection.
+    /// </param>
     /// <returns>
     /// A parsed <see cref="LlmsDocument"/> containing the extracted structure and
     /// any <see cref="ParseDiagnostic"/> entries for issues encountered during parsing.
@@ -66,7 +72,7 @@ public static class LlmsDocumentParser
     /// Thrown when <paramref name="content"/> is <c>null</c>.
     /// Null input is a programming error, not a runtime condition.
     /// </exception>
-    public static LlmsDocument Parse(string content)
+    public static LlmsDocument Parse(string content, ILogger? logger = null)
     {
         ArgumentNullException.ThrowIfNull(content);
 
@@ -234,6 +240,23 @@ public static class LlmsDocumentParser
         // Normalize empty freeform to null
         if (string.IsNullOrWhiteSpace(freeformContent))
             freeformContent = null;
+
+        // Surface diagnostics to logger if available
+        if (logger != null && diagnostics.Count > 0)
+        {
+            foreach (var diag in diagnostics)
+            {
+                if (diag.Severity == DiagnosticSeverity.Error)
+                    logger.LogWarning("Parse error at line {Line}: {Message}", diag.Line, diag.Message);
+                else
+                    logger.LogDebug("Parse warning at line {Line}: {Message}", diag.Line, diag.Message);
+            }
+        }
+
+        logger?.LogDebug("Parse complete: title={Title}, sections={SectionCount}, entries={EntryCount}, diagnostics={DiagCount}",
+            title ?? "(none)", sections.Count,
+            sections.Sum(s => s.Entries.Count),
+            diagnostics.Count);
 
         return new LlmsDocument(
             Title: title ?? string.Empty,

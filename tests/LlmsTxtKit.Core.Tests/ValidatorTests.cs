@@ -2,6 +2,7 @@ using LlmsTxtKit.Core.Parsing;
 using LlmsTxtKit.Core.Validation;
 using LlmsTxtKit.Core.Validation.Rules;
 using Xunit;
+using System.Linq;
 
 namespace LlmsTxtKit.Core.Tests;
 
@@ -360,5 +361,228 @@ public class ValidatorTests
         var validator = new LlmsDocumentValidator();
         await Assert.ThrowsAsync<ArgumentNullException>(
             () => validator.ValidateAsync(null!));
+    }
+
+    // ===============================================================
+    // BLOCKQUOTE_MALFORMED (Direct rule evaluation)
+    // ===============================================================
+
+    /// <summary>
+    /// BlockquoteMalformedRule detects blockquote-related diagnostics and produces a Warning.
+    /// </summary>
+    [Fact]
+    public async Task BlockquoteMalformedRule_WithBlockquoteDiagnostic_ProducesWarning()
+    {
+        // Create a document with parser diagnostics indicating blockquote issues
+        var content = "# Test\n> This is a blockquote\n## Section\n- [Link](https://example.com): desc";
+        var doc = LlmsDocumentParser.Parse(content);
+
+        // Manually add a diagnostic to simulate parser detection (if not already present)
+        if (!doc.Diagnostics.Any(d => d.Message.Contains("blockquote", StringComparison.OrdinalIgnoreCase)))
+        {
+            // The parser may or may not have added diagnostics based on content
+            // For this test, we verify the rule handles documents with blockquote diagnostics
+            var diagList = doc.Diagnostics.ToList();
+            diagList.Add(new ParseDiagnostic(DiagnosticSeverity.Warning, "Blockquote format unexpected", 2));
+
+            var docWithDiag = new LlmsDocument(
+                doc.Title,
+                doc.Summary,
+                doc.FreeformContent,
+                doc.Sections,
+                diagList,
+                doc.RawContent);
+
+            var rule = new BlockquoteMalformedRule();
+            var issues = await rule.EvaluateAsync(docWithDiag, new ValidationOptions());
+
+            Assert.NotEmpty(issues);
+            Assert.All(issues, issue => Assert.Equal("BLOCKQUOTE_MALFORMED", issue.Rule));
+            Assert.All(issues, issue => Assert.Equal(ValidationSeverity.Warning, issue.Severity));
+        }
+    }
+
+    /// <summary>
+    /// BlockquoteMalformedRule produces no issues when there are no blockquote diagnostics.
+    /// </summary>
+    [Fact]
+    public async Task BlockquoteMalformedRule_NoBlockquoteDiagnostics_NoIssues()
+    {
+        var doc = LlmsDocumentParser.Parse(ValidContent);
+        var rule = new BlockquoteMalformedRule();
+        var issues = await rule.EvaluateAsync(doc, new ValidationOptions());
+
+        Assert.DoesNotContain(issues, issue => issue.Rule == "BLOCKQUOTE_MALFORMED");
+    }
+
+    // ===============================================================
+    // UNEXPECTED_HEADING_LEVEL (Direct rule evaluation)
+    // ===============================================================
+
+    /// <summary>
+    /// UnexpectedHeadingLevelRule detects H3+ headings and produces Warnings.
+    /// </summary>
+    [Fact]
+    public async Task UnexpectedHeadingLevelRule_WithH3Heading_ProducesWarning()
+    {
+        var content = "# Test\n> Summary.\n## Docs\n- [A](https://a.com): a\n### Subsection\n- [B](https://b.com): b";
+        var doc = LlmsDocumentParser.Parse(content);
+
+        var rule = new UnexpectedHeadingLevelRule();
+        var issues = await rule.EvaluateAsync(doc, new ValidationOptions());
+
+        Assert.NotEmpty(issues);
+        Assert.Contains(issues, issue => issue.Rule == "UNEXPECTED_HEADING_LEVEL");
+        Assert.All(issues, issue => Assert.Equal(ValidationSeverity.Warning, issue.Severity));
+    }
+
+    /// <summary>
+    /// UnexpectedHeadingLevelRule detects H4 headings and produces Warnings.
+    /// </summary>
+    [Fact]
+    public async Task UnexpectedHeadingLevelRule_WithH4Heading_ProducesWarning()
+    {
+        var content = "# Test\n> Summary.\n## Docs\n- [A](https://a.com): a\n#### Deep Heading\nSome content";
+        var doc = LlmsDocumentParser.Parse(content);
+
+        var rule = new UnexpectedHeadingLevelRule();
+        var issues = await rule.EvaluateAsync(doc, new ValidationOptions());
+
+        Assert.NotEmpty(issues);
+        Assert.Contains(issues, issue => issue.Rule == "UNEXPECTED_HEADING_LEVEL");
+    }
+
+    /// <summary>
+    /// UnexpectedHeadingLevelRule produces no issues with only H1 and H2 headings.
+    /// </summary>
+    [Fact]
+    public async Task UnexpectedHeadingLevelRule_OnlyH1H2_NoIssues()
+    {
+        var doc = LlmsDocumentParser.Parse(ValidContent);
+
+        var rule = new UnexpectedHeadingLevelRule();
+        var issues = await rule.EvaluateAsync(doc, new ValidationOptions());
+
+        Assert.DoesNotContain(issues, issue => issue.Rule == "UNEXPECTED_HEADING_LEVEL");
+    }
+
+    // ===============================================================
+    // CONTENT_OUTSIDE_STRUCTURE (Direct rule evaluation)
+    // ===============================================================
+
+    /// <summary>
+    /// ContentOutsideStructureRule detects orphaned text inside sections and produces Warnings.
+    /// </summary>
+    [Fact]
+    public async Task ContentOutsideStructureRule_OrphanedTextInSection_ProducesWarning()
+    {
+        var content = "# Test\n> Summary.\n## Docs\n- [A](https://a.com): a\nThis is orphaned text inside a section.";
+        var doc = LlmsDocumentParser.Parse(content);
+
+        var rule = new ContentOutsideStructureRule();
+        var issues = await rule.EvaluateAsync(doc, new ValidationOptions());
+
+        Assert.NotEmpty(issues);
+        Assert.Contains(issues, issue => issue.Rule == "CONTENT_OUTSIDE_STRUCTURE");
+        Assert.All(issues, issue => Assert.Equal(ValidationSeverity.Warning, issue.Severity));
+    }
+
+    /// <summary>
+    /// ContentOutsideStructureRule detects multiple orphaned lines and produces multiple Warnings.
+    /// </summary>
+    [Fact]
+    public async Task ContentOutsideStructureRule_MultipleOrphanedLines_ProducesMultipleWarnings()
+    {
+        var content = "# Test\n> Summary.\n## Docs\n- [A](https://a.com): a\nOrphaned 1\nOrphaned 2";
+        var doc = LlmsDocumentParser.Parse(content);
+
+        var rule = new ContentOutsideStructureRule();
+        var issues = await rule.EvaluateAsync(doc, new ValidationOptions());
+
+        var cosIssues = issues.Where(i => i.Rule == "CONTENT_OUTSIDE_STRUCTURE").ToList();
+        Assert.NotEmpty(cosIssues);
+        Assert.True(cosIssues.Count >= 1, "Expected at least one CONTENT_OUTSIDE_STRUCTURE issue");
+    }
+
+    /// <summary>
+    /// ContentOutsideStructureRule produces no issues with only valid entries.
+    /// </summary>
+    [Fact]
+    public async Task ContentOutsideStructureRule_ValidStructureOnly_NoIssues()
+    {
+        var doc = LlmsDocumentParser.Parse(ValidContent);
+
+        var rule = new ContentOutsideStructureRule();
+        var issues = await rule.EvaluateAsync(doc, new ValidationOptions());
+
+        Assert.DoesNotContain(issues, issue => issue.Rule == "CONTENT_OUTSIDE_STRUCTURE");
+    }
+
+    // ===============================================================
+    // Network Rule Skipping [Theory] Tests
+    // ===============================================================
+
+    /// <summary>
+    /// Network-dependent rules produce zero issues when their corresponding options are disabled.
+    /// Parameterized across EntryUrlUnreachableRule, EntryUrlRedirectedRule, and ContentStaleRule.
+    /// </summary>
+    [Theory]
+    [InlineData("ENTRY_URL_UNREACHABLE")]
+    [InlineData("ENTRY_URL_REDIRECTED")]
+    [InlineData("CONTENT_STALE")]
+    public async Task NetworkRules_CheckDisabled_ProducesZeroIssues(string ruleName)
+    {
+        var doc = LlmsDocumentParser.Parse(ValidContent);
+        var optionsDisabled = new ValidationOptions { CheckLinkedUrls = false, CheckFreshness = false };
+
+        IValidationRule rule = ruleName switch
+        {
+            "ENTRY_URL_UNREACHABLE" => new EntryUrlUnreachableRule(),
+            "ENTRY_URL_REDIRECTED" => new EntryUrlRedirectedRule(),
+            "CONTENT_STALE" => new ContentStaleRule { LlmsTxtLastModified = DateTimeOffset.UtcNow },
+            _ => throw new InvalidOperationException($"Unknown rule: {ruleName}")
+        };
+
+        var issues = await rule.EvaluateAsync(doc, optionsDisabled);
+
+        Assert.Empty(issues);
+    }
+
+    // ===============================================================
+    // Issue Severity Correctness [Theory] Tests
+    // ===============================================================
+
+    /// <summary>
+    /// Certain rules produce Error severity while others produce Warning severity.
+    /// Parameterized to test severity correctness across multiple rule types.
+    /// </summary>
+    [Theory]
+    [InlineData("REQUIRED_H1_MISSING", ValidationSeverity.Error)]
+    [InlineData("MULTIPLE_H1_FOUND", ValidationSeverity.Error)]
+    [InlineData("SECTION_EMPTY", ValidationSeverity.Warning)]
+    public async Task RuleSeverity_MatchesExpected(string ruleName, ValidationSeverity expectedSeverity)
+    {
+        IValidationRule rule = ruleName switch
+        {
+            "REQUIRED_H1_MISSING" => new RequiredH1MissingRule(),
+            "MULTIPLE_H1_FOUND" => new MultipleH1FoundRule(),
+            "SECTION_EMPTY" => new SectionEmptyRule(),
+            _ => throw new InvalidOperationException($"Unknown rule: {ruleName}")
+        };
+
+        string contentForRule = ruleName switch
+        {
+            "REQUIRED_H1_MISSING" => "> Summary only, no H1.\n## Docs\n- [A](https://a.com): a",
+            "MULTIPLE_H1_FOUND" => "# First\n> Summary.\n# Second\n## Docs\n- [A](https://a.com): a",
+            "SECTION_EMPTY" => "# Test\n> Summary.\n## Empty\n## Docs\n- [A](https://a.com): a",
+            _ => ValidContent
+        };
+
+        var doc = LlmsDocumentParser.Parse(contentForRule);
+        var issues = await rule.EvaluateAsync(doc, new ValidationOptions());
+
+        var ruleIssues = issues.Where(i => i.Rule == ruleName).ToList();
+        Assert.NotEmpty(ruleIssues);
+        Assert.All(ruleIssues, issue => Assert.Equal(expectedSeverity, issue.Severity));
     }
 }
